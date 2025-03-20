@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy go mod and sum files
 # COPY server/go.mod server/go.sum ./
-COPY server/go.mod ./
+COPY server/go.mod server/go.sum ./
 
 # Download dependencies
 WORKDIR /app

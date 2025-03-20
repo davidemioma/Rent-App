@@ -10,21 +10,21 @@ services:
       - /app/client/node_modules
       - /app/client/.next
 
-  # server:
-  #   build:
-  #     context: .
-  #     dockerfile: server/Dockerfile
-  #   volumes:
-  #     - .:/app
-  #     - go_mod_cache:/go/pkg/mod
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     - GO_ENV=development
-  #     - PORT=8080
-  #     - DATABASE_URL=postgres://postgres:king123@postgres:5432/rentify-db?sslmode=disable
-  #   depends_on:
-  #     - postgres
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    volumes:
+      - ./server:/app
+      - go_mod_cache:/go/pkg/mod
+    ports:
+      - "8080:8080"
+    environment:
+      - GO_ENV=development
+      - PORT=8080
+      - DATABASE_URL=postgres://postgres:king123@postgres:5432/rentify-db?sslmode=disable
+    # depends_on:
+    #   - postgres
 
   # postgres:
   #   image: postgis/postgis:16-3.4
