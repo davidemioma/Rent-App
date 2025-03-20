@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/lpernett/godotenv"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -16,8 +18,14 @@ func main() {
 	    log.Fatal("PORT not found")
 	}
 
-	app := application{}
+	// Connect to database
+	db := connToDB()
 
+	app := application{
+		db: db,
+	}
+
+	// Run the server
 	r := app.mount()
 
 	log.Printf("Server running on port %v", port)

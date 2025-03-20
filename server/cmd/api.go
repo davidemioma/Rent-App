@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
@@ -9,7 +10,9 @@ import (
 	"github.com/go-chi/cors"
 )
 
-type application struct {}
+type application struct {
+	db *sql.DB
+}
 
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
