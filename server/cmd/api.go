@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"net/http"
+	"server/cmd/handlers"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -39,7 +40,11 @@ func (app *application) mount() http.Handler {
 	}))
 
 	// Routes
-	r.Route("/v1", func(r chi.Router) {})
+	r.Route("/api", func(r chi.Router) {
+		r.Get("/health", handlers.HandlerReadiness)
+
+		r.Get("/err", handlers.HandlerErr)
+	})
 
 	return r
 }

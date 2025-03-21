@@ -38,7 +38,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     command: >
       bash -c "
-      apt-get update && apt-get install -y postgis &&
+      apt-get update && apt-get install -y postgresql-16-postgis-3 &&
       docker-entrypoint.sh postgres
       "
 
