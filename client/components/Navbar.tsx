@@ -36,7 +36,7 @@ const Navbar = () => {
       ) : (
         <div className="flex items-center gap-5">
           <Link
-            href="/auth/sign-in"
+            href="/signin"
             className={cn(
               buttonVariants({
                 variant: "outline",
@@ -48,7 +48,7 @@ const Navbar = () => {
           </Link>
 
           <Link
-            href="/auth/sign-up"
+            href="/signup"
             className={cn(
               buttonVariants({
                 className:
