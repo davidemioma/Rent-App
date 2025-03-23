@@ -3,7 +3,8 @@ package main
 import (
 	"database/sql"
 	"net/http"
-	"server/cmd/handlers"
+	"server/cmd/utils"
+	"server/internal/database"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -12,7 +13,8 @@ import (
 )
 
 type application struct {
-	db *sql.DB
+	dbConfig *sql.DB
+	dbQuery  *database.Queries
 }
 
 func (app *application) mount() http.Handler {
@@ -41,9 +43,21 @@ func (app *application) mount() http.Handler {
 
 	// Routes
 	r.Route("/api", func(r chi.Router) {
-		r.Get("/health", handlers.HandlerReadiness)
+		r.Get("/health", utils.HandlerReadiness)
 
-		r.Get("/err", handlers.HandlerErr)
+		r.Get("/err", utils.HandlerErr)
+
+		r.Route("/tenant", func(r chi.Router) {
+			r.Post("/", app.middlewareAuth([]string{"tenant"}, app.createTenant))
+
+			r.Get("/{cognitoId}", app.middlewareAuth([]string{"tenant"}, app.getTenant))
+		})
+
+		r.Route("/manager", func(r chi.Router) {
+			r.Post("/", app.middlewareAuth([]string{"manager"}, app.createManager))
+
+			r.Get("/{cognitoId}", app.middlewareAuth([]string{"manager"}, app.getManager))
+		})
 	})
 
 	return r

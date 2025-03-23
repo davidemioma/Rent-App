@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"server/internal/database"
 
 	"github.com/lpernett/godotenv"
 
@@ -22,7 +23,8 @@ func main() {
 	db := connToDB()
 
 	app := application{
-		db: db,
+		dbConfig: db, // For transactions.
+		dbQuery: database.New(db), // For regular queries.
 	}
 
 	// Run the server
