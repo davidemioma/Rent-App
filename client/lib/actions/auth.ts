@@ -37,3 +37,42 @@ export const createDbUser = async ({
     }
   }
 };
+
+export const updateDbUser = async ({
+  values,
+  userRole,
+  cognitoId,
+}: {
+  values: AuthValidator;
+  userRole: string;
+  cognitoId: string;
+}) => {
+  try {
+    const isValid = AuthSchema.safeParse(values);
+
+    if (isValid.error) {
+      return { error: "Invalid parameters" };
+    }
+
+    const endpoint =
+      userRole.toLowerCase() === "manager" ? "/managers" : "/tenants";
+
+    const res = await axiosInstance.patch(`${endpoint}/${cognitoId}`, {
+      ...values,
+    });
+
+    if (res.status !== 200) {
+      return { error: "Unable to update user." };
+    }
+
+    return res.data;
+  } catch (err) {
+    console.log("updateDbUser Err:", err);
+
+    if (err instanceof AxiosError) {
+      return { error: `${err.response?.data}` };
+    } else {
+      return { error: "Something went wrong! unable to update user." };
+    }
+  }
+};

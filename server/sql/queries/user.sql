@@ -13,3 +13,17 @@ SELECT * FROM manager WHERE cognito_id = $1;
 
 -- name: GetTenantByCognitoId :one
 SELECT * FROM tenant WHERE cognito_id = $1;
+
+-- name: UpdateTenant :exec
+UPDATE tenant
+SET 
+    name = $1,
+    phoneNumber = $2
+WHERE cognito_id = $3;
+
+-- name: UpdateManager :exec
+UPDATE manager
+SET 
+    name = $1,
+    phoneNumber = $2
+WHERE cognito_id = $3;

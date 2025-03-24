@@ -34,7 +34,7 @@ func (app *application) mount() http.Handler {
 	// Cors
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
@@ -51,12 +51,16 @@ func (app *application) mount() http.Handler {
 			r.Post("/", app.middlewareAuth([]string{"tenant"}, app.createTenant))
 
 			r.Get("/{cognitoId}", app.middlewareAuth([]string{"tenant"}, app.getTenant))
+
+			r.Patch("/{cognitoId}", app.middlewareAuth([]string{"tenant"}, app.updateTenant))
 		})
 
 		r.Route("/managers", func(r chi.Router) {
 			r.Post("/", app.middlewareAuth([]string{"manager"}, app.createManager))
 
 			r.Get("/{cognitoId}", app.middlewareAuth([]string{"manager"}, app.getManager))
+
+			r.Patch("/{cognitoId}", app.middlewareAuth([]string{"manager"}, app.updateManager))
 		})
 	})
 

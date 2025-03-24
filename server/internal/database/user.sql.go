@@ -110,3 +110,41 @@ func (q *Queries) GetTenantByCognitoId(ctx context.Context, cognitoID string) (T
 	)
 	return i, err
 }
+
+const updateManager = `-- name: UpdateManager :exec
+UPDATE manager
+SET 
+    name = $1,
+    phoneNumber = $2
+WHERE cognito_id = $3
+`
+
+type UpdateManagerParams struct {
+	Name        string
+	Phonenumber string
+	CognitoID   string
+}
+
+func (q *Queries) UpdateManager(ctx context.Context, arg UpdateManagerParams) error {
+	_, err := q.db.ExecContext(ctx, updateManager, arg.Name, arg.Phonenumber, arg.CognitoID)
+	return err
+}
+
+const updateTenant = `-- name: UpdateTenant :exec
+UPDATE tenant
+SET 
+    name = $1,
+    phoneNumber = $2
+WHERE cognito_id = $3
+`
+
+type UpdateTenantParams struct {
+	Name        string
+	Phonenumber string
+	CognitoID   string
+}
+
+func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) error {
+	_, err := q.db.ExecContext(ctx, updateTenant, arg.Name, arg.Phonenumber, arg.CognitoID)
+	return err
+}
