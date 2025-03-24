@@ -1,13 +1,10 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
 const CallToActionSection = () => {
-  const user = null;
-
   return (
     <div className="relative py-24">
       <Image
@@ -45,16 +42,6 @@ const CallToActionSection = () => {
               >
                 Search
               </button>
-
-              {!user && (
-                <Link
-                  href="/signup"
-                  className="inline-block text-white bg-red-500 rounded-lg px-6 py-3 font-semibold hover:opacity-75 transition-opacity"
-                  scroll={false}
-                >
-                  Sign Up
-                </Link>
-              )}
             </div>
           </div>
         </div>

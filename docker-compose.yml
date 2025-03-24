@@ -25,6 +25,8 @@ services:
       - GO_ENV=development
       - PORT=8080
       - DATABASE_URL=postgres://postgres:king123@postgres:5432/rentify-db?sslmode=disable
+      - AWS_REGION=eu-west-2
+      - USER_POOL_ID=eu-west-2_wJe9x4TEq
     depends_on:
       - postgres
 

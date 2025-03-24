@@ -1,31 +1,39 @@
+import { AxiosError } from "axios";
 import axiosInstance from "../axios";
-import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
+import { Manager, Tenant } from "@/types";
+import { AuthSchema, AuthValidator } from "../validators/auth";
 
-export const getAuthUser = async () => {
+export const createDbUser = async ({
+  values,
+  userRole,
+}: {
+  values: AuthValidator;
+  userRole: string;
+}) => {
   try {
-    const session = await fetchAuthSession();
+    const isValid = AuthSchema.safeParse(values);
 
-    if (!session) return null;
+    if (isValid.error) {
+      return { error: "Invalid parameters" };
+    }
 
-    const { idToken } = session.tokens ?? {};
-
-    if (!idToken) return null;
-
-    const user = await getCurrentUser();
-
-    if (!user) return null;
-
-    // Get the user role
-    const role = idToken?.payload["custom:role"] as string;
-
-    // Fetch user details from the database
     const endpoint =
-      role === "manager" ? `/manager/${user.userId}` : `/tenant/${user.userId}`;
+      userRole.toLowerCase() === "manager" ? "/managers" : "/tenants";
 
-    await axiosInstance.get(endpoint);
+    const res = await axiosInstance.post(endpoint, { ...values });
+
+    if (res.status !== 201) {
+      return { error: "Unable to create user." };
+    }
+
+    return res.data as Tenant | Manager;
   } catch (err) {
-    console.log("getAuthUser Err:", err);
+    console.log("createDbUser Err:", err);
 
-    return null;
+    if (err instanceof AxiosError) {
+      return { error: `${err.response?.data}` };
+    } else {
+      return { error: "Something went wrong! unable to create user." };
+    }
   }
 };

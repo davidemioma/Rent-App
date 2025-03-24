@@ -47,13 +47,13 @@ func (app *application) mount() http.Handler {
 
 		r.Get("/err", utils.HandlerErr)
 
-		r.Route("/tenant", func(r chi.Router) {
+		r.Route("/tenants", func(r chi.Router) {
 			r.Post("/", app.middlewareAuth([]string{"tenant"}, app.createTenant))
 
 			r.Get("/{cognitoId}", app.middlewareAuth([]string{"tenant"}, app.getTenant))
 		})
 
-		r.Route("/manager", func(r chi.Router) {
+		r.Route("/managers", func(r chi.Router) {
 			r.Post("/", app.middlewareAuth([]string{"manager"}, app.createManager))
 
 			r.Get("/{cognitoId}", app.middlewareAuth([]string{"manager"}, app.getManager))
