@@ -62,6 +62,14 @@ func (app *application) mount() http.Handler {
 
 			r.Patch("/{cognitoId}", app.middlewareAuth([]string{"manager"}, app.updateManager))
 		})
+
+		r.Route("/properties", func(r chi.Router) {
+			r.Post("/", app.middlewareAuth([]string{"manager"}, app.createProperty))
+
+			r.Get("/", app.getProperties)
+
+			r.Get("/{id}",app.getProperty)
+		})
 	})
 
 	return r
