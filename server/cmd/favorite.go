@@ -1,6 +1,9 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"server/cmd/utils"
@@ -9,6 +12,52 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
+
+func (app *application) getFavoriteProperties(w http.ResponseWriter, r *http.Request, user utils.User) {
+	tenant, err := app.dbQuery.GetTenantByCognitoId(r.Context(), user.CognitoID)
+
+	if err != nil {
+		log.Printf("getFavoriteProperties DB err: %v", err)
+
+		utils.RespondWithError(w, http.StatusNotFound, "Account not found!")
+      
+        return
+	}
+
+	var properties []utils.FavoriteProperty
+
+	data, err := app.dbQuery.GetFavouriteProperties(r.Context(), tenant.ID)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.RespondWithJSON(w, http.StatusOK, []utils.FavoriteProperty{})
+
+			return
+		} else {
+			log.Printf("GetFavouriteProperties DB err: %v", err)
+
+			utils.RespondWithError(w, http.StatusNotFound, "Unable to get properties!")
+		
+			return
+		}
+	}
+
+	for _, raw := range data {
+		var property utils.FavoriteProperty
+
+		if err := json.Unmarshal(raw, &property); err != nil {
+			log.Printf("json.Unmarshal GetFavouriteProperties err: %v", err)
+
+			utils.RespondWithError(w, http.StatusNotFound, "Unable to get properties!")
+		
+			return
+		}
+		
+		properties = append(properties, property)
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, properties)
+}
 
 func (app *application) toggleFavorite(w http.ResponseWriter, r *http.Request, user utils.User) {
 	propertyId := chi.URLParam(r, "propertyId")

@@ -108,6 +108,7 @@ func DBFilteredPropertiesToJson(properties []database.GetFilteredPropertiesRow) 
 
 	return jsonProperties
 }
+
 type Coordinates struct {
 	Longitude float64 `json:"longitude"`
     Latitude  float64 `json:"latitude"`
@@ -144,6 +145,13 @@ type JsonProperty struct {
     ManagerID         uuid.UUID       `json:"managerId"`
     CreatedAt         time.Time       `json:"createdAt"`
     UpdatedAt         time.Time       `json:"updatedAt"`
+}
+
+type FavoriteProperty struct {
+	ID         uuid.UUID    `json:"id"`
+	PropertyId uuid.UUID    `json:"propertyId"`
+    TenantId   uuid.UUID    `json:"tenantId"`
+	Property   JsonProperty `json:"property"`
 }
 
 type JsonLeaseProperty struct {
@@ -222,4 +230,127 @@ type PropertyFormData struct {
 	Country      string
 	PostalCode   string
 	PropertyData PropertyData
+}
+
+type JsonLease struct {
+	ID         uuid.UUID    `json:"id"`  
+	PropertyID uuid.UUID    `json:"propertyId"` 
+	TenantID   uuid.UUID    `json:"tenantId"` 
+	Rent       string       `json:"rent"` 
+	Deposit    string       `json:"deposit"` 
+	StartDate  time.Time    `json:"startDate"` 
+	EndDate    time.Time    `json:"endDate"` 
+	Property   JsonProperty `json:"property"`
+}
+
+func DBLeaseToJson(leases []database.GetPropertyLeasesRow) []JsonLease {
+	var jsonLeases []JsonLease
+
+	for _, lease := range leases{
+		jsonLeases = append(jsonLeases, JsonLease{
+			ID: lease.ID,
+			PropertyID: lease.PropertyID,
+			TenantID: lease.TenantID,
+			Rent: lease.Rent,
+			Deposit: lease.Deposit,
+			StartDate: lease.StartDate,
+			EndDate: lease.EndDate,
+			Property: JsonProperty{
+				ID: lease.ID_2,
+				Name: lease.Name,
+				Description:       lease.Description,
+				PricePerMonth:     lease.PricePerMonth,
+				SecurityDeposit:   lease.SecurityDeposit,
+				ApplicationFee:    lease.ApplicationFee,
+				PhotoUrls:         lease.PhotoUrls,
+				IsPetsAllowed:     lease.IsPetsAllowed,
+				IsParkingIncluded: lease.IsParkingIncluded,
+				Beds:              lease.Beds,
+				Baths:             lease.Baths,
+				SquareFeet:        lease.SquareFeet,
+				PropertyType:      string(lease.PropertyType),
+				AverageRating:     lease.AverageRating,
+				NumberOfReviews:   lease.NumberOfReviews,
+				LocationID:        lease.LocationID,
+				ManagerID:         lease.ManagerID,
+				CreatedAt:         lease.CreatedAt,
+				UpdatedAt:         lease.UpdatedAt,
+			},
+		})
+	}
+
+	return jsonLeases
+}
+
+type JsonPayment struct {
+	ID            uuid.UUID              `json:"id"`    
+	LeaseID       uuid.UUID              `json:"leaseId"`
+	AmountDue     string                 `json:"amountDue"`
+	AmountPaid    string                 `json:"amountPaid"`
+	DueDate       time.Time              `json:"dueDate"`
+	PaymentDate   time.Time              `json:"paymentDate"`
+	PaymentStatus database.PaymentStatus `json:"paymentStatus"`
+}
+
+func DBPaymentToJson(payments []database.Payment) []JsonPayment {
+	var jsonPayments []JsonPayment
+
+	for _, payment := range payments{
+		jsonPayments = append(jsonPayments, JsonPayment{
+			ID: payment.ID,
+			LeaseID: payment.LeaseID,
+			AmountDue: payment.AmountDue,
+			AmountPaid: payment.AmountPaid,
+			DueDate: payment.DueDate,
+			PaymentDate: payment.PaymentDate,
+			PaymentStatus: payment.PaymentStatus,
+		})
+	}
+
+	return jsonPayments
+}
+
+type JsonApplication struct {
+    LeaseID                    uuid.NullUUID              `json:"leaseId"`
+    ApplicationName            string                     `json:"applicationName"`
+    ApplicationEmail           string                     `json:"applicationEmail"`
+    ApplicationPhoneNumber     string                     `json:"applicationPhoneNumber"`
+    ApplicationMessage         sql.NullString             `json:"applicationMessage"`
+    ApplicationStatus          database.ApplicationStatus `json:"applicationStatus"`
+    ApplicationApplicationDate time.Time                  `json:"applicationApplicationDate"`
+    ID                         uuid.UUID                  `json:"id"`
+    Name                       string                     `json:"name"`
+    Description                string                     `json:"description"`
+    PricePerMonth              string                     `json:"pricePerMonth"`
+    SecurityDeposit            string                     `json:"securityDeposit"`
+    ApplicationFee             string                     `json:"applicationFee"`
+    PhotoUrls                  []string                   `json:"photoUrls"`
+    IsPetsAllowed              bool                       `json:"isPetsAllowed"`
+    IsParkingIncluded          bool                       `json:"isParkingIncluded"`
+    Beds                       int32                      `json:"beds"`
+    Baths                      string                     `json:"baths"`
+    SquareFeet                 int32                      `json:"squareFeet"`
+    PropertyType               database.PropertyType      `json:"propertyType"`
+    AverageRating              sql.NullString             `json:"averageRating"`
+    NumberOfReviews            sql.NullInt32              `json:"numberOfReviews"`
+    LocationID                 uuid.UUID                  `json:"locationId"`
+    ManagerID                  uuid.UUID                  `json:"managerId"`
+    CreatedAt                  time.Time                  `json:"createdAt"`
+    UpdatedAt                  time.Time                  `json:"updatedAt"`
+    PropertyLocationID         uuid.UUID                  `json:"propertyLocationId"`
+    LocationAddress            string                     `json:"locationAddress"`
+    LocationCity               string                     `json:"locationCity"`
+    LocationState              string                     `json:"locationState"`
+    LocationCountry            string                     `json:"locationCountry"`
+    LocationPostalCode         string                     `json:"locationPostalCode"`
+    ManagerUserID              uuid.UUID                  `json:"managerUserId"`
+    ManagerCognitoID           string                     `json:"managerCognitoId"`
+    ManagerName                string                     `json:"managerName"`
+    ManagerEmail               string                     `json:"managerEmail"`
+    ManagerPhonenumber         string                     `json:"managerPhonenumber"`
+    TenantUserID               uuid.UUID                  `json:"tenantUserId"`
+    TenantCognitoID            string                     `json:"tenantCognitoId"`
+    TenantName                 string                     `json:"tenantName"`
+    TenantEmail                string                     `json:"tenantEmail"`
+    TenantPhonenumber          string                     `json:"tenantPhonenumber"`
 }

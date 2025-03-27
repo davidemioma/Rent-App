@@ -12,8 +12,8 @@ SELECT * FROM favorite WHERE property_id = $1 AND tenant_id = $2;
 SELECT 
   json_build_object(
     'id', f.id,
-    'rent', f.property_id,
-    'deposit', f.tenant_id,
+    'propertyId', f.property_id,
+    'tenantId', f.tenant_id,
     'property', json_build_object(
       'id', p.id,
       'name', p.name,

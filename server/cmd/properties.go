@@ -260,7 +260,7 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			utils.RespondWithJSON(w, http.StatusOK, utils.JsonProperty{})
+			utils.RespondWithJSON(w, http.StatusOK, []utils.JsonProperty{})
 
 			return
 		} else {

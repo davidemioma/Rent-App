@@ -58,6 +58,8 @@ func (app *application) mount() http.Handler {
 
 			r.Get("/{cognitoId}/residences", app.middlewareAuth([]string{"tenant"}, app.getCurrentResidences))
 
+			r.Get("/{cognitoId}/favorites", app.middlewareAuth([]string{"tenant"}, app.getFavoriteProperties))
+
 			r.Patch("/{cognitoId}/favorites/{propertyId}", app.middlewareAuth([]string{"tenant"}, app.toggleFavorite))
 		})
 
@@ -77,6 +79,12 @@ func (app *application) mount() http.Handler {
 			r.Get("/", app.getProperties)
 
 			r.Get("/{id}",app.getProperty)
+		})
+
+		r.Route("/leases", func(r chi.Router) {
+			r.Get("/", app.middlewareAuth([]string{"manager", "tenant"}, app.getLeases))
+
+			r.Get("/{leaseId}/payments", app.middlewareAuth([]string{"manager", "tenant"}, app.getLeasePayment))
 		})
 	})
 
