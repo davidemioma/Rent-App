@@ -16,6 +16,7 @@ import (
 
 const getUserApplications = `-- name: GetUserApplications :many
 SELECT 
+    a.id AS application_id,
     a.lease_id AS lease_id,
     a.name AS application_name,
     a.email AS application_email,
@@ -57,6 +58,7 @@ type GetUserApplicationsParams struct {
 }
 
 type GetUserApplicationsRow struct {
+	ApplicationID              uuid.UUID
 	LeaseID                    uuid.NullUUID
 	ApplicationName            string
 	ApplicationEmail           string
@@ -111,6 +113,7 @@ func (q *Queries) GetUserApplications(ctx context.Context, arg GetUserApplicatio
 	for rows.Next() {
 		var i GetUserApplicationsRow
 		if err := rows.Scan(
+			&i.ApplicationID,
 			&i.LeaseID,
 			&i.ApplicationName,
 			&i.ApplicationEmail,

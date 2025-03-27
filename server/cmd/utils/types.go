@@ -311,6 +311,7 @@ func DBPaymentToJson(payments []database.Payment) []JsonPayment {
 }
 
 type JsonApplication struct {
+	ApplicationID              uuid.UUID                  `json:"application_id"`
     LeaseID                    uuid.NullUUID              `json:"leaseId"`
     ApplicationName            string                     `json:"applicationName"`
     ApplicationEmail           string                     `json:"applicationEmail"`

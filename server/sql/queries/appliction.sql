@@ -1,5 +1,6 @@
 -- name: GetUserApplications :many
 SELECT 
+    a.id AS application_id,
     a.lease_id AS lease_id,
     a.name AS application_name,
     a.email AS application_email,
