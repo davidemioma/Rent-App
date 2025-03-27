@@ -3,6 +3,7 @@ package utils
 import (
 	"database/sql"
 	"encoding/json"
+	"mime/multipart"
 	"server/internal/database"
 	"time"
 
@@ -145,6 +146,15 @@ type JsonProperty struct {
     UpdatedAt         time.Time       `json:"updatedAt"`
 }
 
+type JsonLeaseProperty struct {
+	ID         uuid.UUID    `json:"id"`
+	Rent       string       `json:"rent"`
+	Deposit    string       `json:"deposit"`
+	StartDate  time.Time    `json:"start_date"`
+	EndDate    time.Time    `json:"end_date"`
+	Property   JsonProperty `json:"property"`
+}
+
 func DBpropertyToJson(property database.GetPropertyRow, lat float64, lng float64) JsonProperty {
 	return JsonProperty{
 		ID: property.ID,
@@ -179,4 +189,37 @@ func DBpropertyToJson(property database.GetPropertyRow, lat float64, lng float64
 			},
 		},
 	}
+}
+
+type UploadedFile struct {
+	File        multipart.File
+	Header      *multipart.FileHeader
+	ContentType string
+	Extension   string
+}
+
+type PropertyData struct {
+	Name               string
+	Description        string
+	PricePerMonth      float64
+	SecurityDeposit    float64
+	ApplicationFee     float64
+	IsPetsAllowed      bool
+	IsParkingIncluded  bool
+	Beds               int
+	Baths              float64
+	SquareFeet         int
+	PropertyType       string
+	AverageRating      float64
+	NumberOfReviews    int
+	UploadedFiles      []UploadedFile
+}
+
+type PropertyFormData struct {
+	Address      string
+	City         string
+	State        string
+	Country      string
+	PostalCode   string
+	PropertyData PropertyData
 }

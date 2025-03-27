@@ -13,8 +13,10 @@ import (
 )
 
 type application struct {
-	dbConfig *sql.DB
-	dbQuery  *database.Queries
+	dbConfig       *sql.DB
+	dbQuery        *database.Queries
+	s3Bucket       string
+	cloudfront_url string
 }
 
 func (app *application) mount() http.Handler {
@@ -53,6 +55,10 @@ func (app *application) mount() http.Handler {
 			r.Get("/{cognitoId}", app.middlewareAuth([]string{"tenant"}, app.getTenant))
 
 			r.Patch("/{cognitoId}", app.middlewareAuth([]string{"tenant"}, app.updateTenant))
+
+			r.Get("/{cognitoId}/residences", app.middlewareAuth([]string{"tenant"}, app.getCurrentResidences))
+
+			r.Patch("/{cognitoId}/favorites/{propertyId}", app.middlewareAuth([]string{"tenant"}, app.toggleFavorite))
 		})
 
 		r.Route("/managers", func(r chi.Router) {
@@ -61,6 +67,8 @@ func (app *application) mount() http.Handler {
 			r.Get("/{cognitoId}", app.middlewareAuth([]string{"manager"}, app.getManager))
 
 			r.Patch("/{cognitoId}", app.middlewareAuth([]string{"manager"}, app.updateManager))
+
+			r.Get("/{cognitoId}/properties", app.middlewareAuth([]string{"manager"}, app.getManagerProperties))
 		})
 
 		r.Route("/properties", func(r chi.Router) {

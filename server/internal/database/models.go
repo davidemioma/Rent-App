@@ -159,6 +159,14 @@ type Application struct {
 	ApplicationDate time.Time
 }
 
+type Favorite struct {
+	ID         uuid.UUID
+	PropertyID uuid.UUID
+	TenantID   uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
 type Lease struct {
 	ID         uuid.UUID
 	PropertyID uuid.UUID

@@ -25,6 +25,8 @@ func main() {
 	app := application{
 		dbConfig: db, // For transactions.
 		dbQuery: database.New(db), // For regular queries.
+		s3Bucket: "",
+		cloudfront_url: "",
 	}
 
 	// Run the server
