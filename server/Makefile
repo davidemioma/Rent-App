@@ -21,8 +21,19 @@ run-migration-down:
 	@cd $(MIGRATIONS_DIR) && goose postgres $(CONNECTION_STRING) down
 	@echo "Migrations rolled back successfully!"
 
+run-migration-reset:
+	@echo "Forcing reset with CASCADE..."
+	@cd $(MIGRATIONS_DIR) && \
+	for file in *.down.sql; do \
+		echo "Executing $${file}..."; \
+		psql $(CONNECTION_STRING) -f "$${file}" || true; \
+	done
+	@echo "All down migrations attempted - verify database state"
+
+
 # Help target (optional)
 help:
 	@echo "Available targets:"
 	@echo "  run-migration-up    - Apply all migrations"
 	@echo "  run-migration-down  - Roll back the latest migration"
+	@echo "  run-migration-reset  - Reset all migration"

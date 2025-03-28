@@ -301,3 +301,22 @@ func GetCoordinates(limit, address, city, country, postalCode string) (float64, 
 
 	return longitude, latitude, nil
 }
+
+func CalculateNextPaymentDate(startDate time.Time) time.Time {
+	today := time.Now()
+
+	nextPaymentDate := startDate
+
+	// If the start date is in the future, return it as is
+	if nextPaymentDate.After(today) {
+		return nextPaymentDate
+	}
+
+	// Keep adding months until we find the next payment date after today
+	for nextPaymentDate.Before(today) || nextPaymentDate.Equal(today) {
+		nextPaymentDate = nextPaymentDate.AddDate(0, 1, 0)
+	}
+
+	return nextPaymentDate
+}
+

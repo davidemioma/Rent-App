@@ -14,9 +14,10 @@ import (
 	"github.com/lib/pq"
 )
 
-const createLease = `-- name: CreateLease :exec
+const createLease = `-- name: CreateLease :one
 INSERT INTO lease (id, property_id, tenant_id, rent, deposit, start_date, end_date)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, property_id, tenant_id, rent, deposit, start_date, end_date
 `
 
 type CreateLeaseParams struct {
@@ -29,8 +30,8 @@ type CreateLeaseParams struct {
 	EndDate    time.Time
 }
 
-func (q *Queries) CreateLease(ctx context.Context, arg CreateLeaseParams) error {
-	_, err := q.db.ExecContext(ctx, createLease,
+func (q *Queries) CreateLease(ctx context.Context, arg CreateLeaseParams) (Lease, error) {
+	row := q.db.QueryRowContext(ctx, createLease,
 		arg.ID,
 		arg.PropertyID,
 		arg.TenantID,
@@ -39,7 +40,17 @@ func (q *Queries) CreateLease(ctx context.Context, arg CreateLeaseParams) error 
 		arg.StartDate,
 		arg.EndDate,
 	)
-	return err
+	var i Lease
+	err := row.Scan(
+		&i.ID,
+		&i.PropertyID,
+		&i.TenantID,
+		&i.Rent,
+		&i.Deposit,
+		&i.StartDate,
+		&i.EndDate,
+	)
+	return i, err
 }
 
 const createPayment = `-- name: CreatePayment :exec
@@ -68,6 +79,25 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) er
 		arg.PaymentStatus,
 	)
 	return err
+}
+
+const getLease = `-- name: GetLease :one
+SELECT id, property_id, tenant_id, rent, deposit, start_date, end_date FROM lease WHERE id = $1
+`
+
+func (q *Queries) GetLease(ctx context.Context, id uuid.UUID) (Lease, error) {
+	row := q.db.QueryRowContext(ctx, getLease, id)
+	var i Lease
+	err := row.Scan(
+		&i.ID,
+		&i.PropertyID,
+		&i.TenantID,
+		&i.Rent,
+		&i.Deposit,
+		&i.StartDate,
+		&i.EndDate,
+	)
+	return i, err
 }
 
 const getLeasePayments = `-- name: GetLeasePayments :many
@@ -108,7 +138,7 @@ func (q *Queries) GetLeasePayments(ctx context.Context, leaseID uuid.UUID) ([]Pa
 }
 
 const getPropertyLeases = `-- name: GetPropertyLeases :many
-SELECT l.id, l.property_id, l.tenant_id, l.rent, l.deposit, l.start_date, l.end_date, p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.created_at, p.updated_at
+SELECT l.id, l.property_id, l.tenant_id, l.rent, l.deposit, l.start_date, l.end_date, p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at
 FROM lease l
 JOIN property p ON l.property_id = p.id
 `
@@ -138,6 +168,7 @@ type GetPropertyLeasesRow struct {
 	NumberOfReviews   sql.NullInt32
 	LocationID        uuid.UUID
 	ManagerID         uuid.UUID
+	TenantID_2        uuid.NullUUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }
@@ -176,6 +207,7 @@ func (q *Queries) GetPropertyLeases(ctx context.Context) ([]GetPropertyLeasesRow
 			&i.NumberOfReviews,
 			&i.LocationID,
 			&i.ManagerID,
+			&i.TenantID_2,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

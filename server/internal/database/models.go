@@ -223,6 +223,7 @@ type Property struct {
 	NumberOfReviews   sql.NullInt32
 	LocationID        uuid.UUID
 	ManagerID         uuid.UUID
+	TenantID          uuid.NullUUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }

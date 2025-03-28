@@ -79,44 +79,44 @@ WHERE p.manager_id = $1;
 -- name: GetTenantProperties :many
 SELECT 
   json_build_object(
-    'id', l.id,
-    'rent', l.rent,
-    'deposit', l.deposit,
-    'start_date', l.start_date,
-    'end_date', l.end_date,
-    'property', json_build_object(
-      'id', p.id,
-      'name', p.name,
-      'description', p.description,
-      'price_per_month', p.price_per_month,
-      'security_deposit', p.security_deposit,
-      'application_fee', p.application_fee,
-      'photo_urls', p.photo_urls,
-      'is_pets_allowed', p.is_pets_allowed,
-      'is_parking_included', p.is_parking_included,
-      'beds', p.beds,
-      'baths', p.baths,
-      'square_feet', p.square_feet,
-      'property_type', p.property_type,
-      'average_rating', p.average_rating,
-      'number_of_reviews', p.number_of_reviews,
-      'created_at', p.created_at,
-      'updated_at', p.updated_at,
-      'location', json_build_object(
-        'id', loc.id,
-        'address', loc.address,
-        'city', loc.city,
-        'state', loc.state,
-        'country', loc.country,
-        'postal_code', loc.postal_code,
-        'coordinates', json_build_object(
-          'longitude', ST_X(loc.coordinates::geometry),
-          'latitude', ST_Y(loc.coordinates::geometry)
-        )
+    'id', p.id,
+    'name', p.name,
+    'description', p.description,
+    'price_per_month', p.price_per_month,
+    'security_deposit', p.security_deposit,
+    'application_fee', p.application_fee,
+    'photo_urls', p.photo_urls,
+    'is_pets_allowed', p.is_pets_allowed,
+    'is_parking_included', p.is_parking_included,
+    'beds', p.beds,
+    'baths', p.baths,
+    'square_feet', p.square_feet,
+    'property_type', p.property_type,
+    'average_rating', p.average_rating,
+    'number_of_reviews', p.number_of_reviews,
+    'manager_id', p.manager_id,
+    'tenant_id', p.tenant_id,
+    'created_at', p.created_at,
+    'updated_at', p.updated_at,
+    'location', json_build_object(
+      'id', loc.id,
+      'address', loc.address,
+      'city', loc.city,
+      'state', loc.state,
+      'country', loc.country,
+      'postal_code', loc.postal_code,
+      'coordinates', json_build_object(
+        'longitude', ST_X(loc.coordinates::geometry),
+        'latitude', ST_Y(loc.coordinates::geometry)
       )
     )
-  ) AS lease_data
-FROM lease l
-LEFT JOIN property p ON l.property_id = p.id
-LEFT JOIN location loc ON p.location_id = loc.id
-WHERE l.tenant_id = $1;
+  ) AS property_data
+FROM property p
+LEFT JOIN location l ON p.location_id = l.id
+WHERE p.tenant_id = $1;
+
+-- name: UpdateProperty :exec
+UPDATE property
+SET 
+  tenant_id = $1
+WHERE id = $2;

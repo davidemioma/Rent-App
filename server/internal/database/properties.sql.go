@@ -120,7 +120,7 @@ func (q *Queries) CreateProperty(ctx context.Context, arg CreatePropertyParams) 
 
 const getFilteredProperties = `-- name: GetFilteredProperties :many
 SELECT 
-  p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.created_at, p.updated_at,
+  p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at,
   json_build_object(
     'id', l.id,
     'address', l.address,
@@ -202,6 +202,7 @@ type GetFilteredPropertiesRow struct {
 	NumberOfReviews   sql.NullInt32
 	LocationID        uuid.UUID
 	ManagerID         uuid.UUID
+	TenantID          uuid.NullUUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	Location          json.RawMessage
@@ -247,6 +248,7 @@ func (q *Queries) GetFilteredProperties(ctx context.Context, arg GetFilteredProp
 			&i.NumberOfReviews,
 			&i.LocationID,
 			&i.ManagerID,
+			&i.TenantID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Location,
@@ -285,7 +287,7 @@ func (q *Queries) GetLocationCoordinates(ctx context.Context, id uuid.UUID) (Get
 }
 
 const getManagerProperties = `-- name: GetManagerProperties :many
-SELECT p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.created_at, p.updated_at, l.id, l.address, l.city, l.state, l.country, l.postal_code, l.coordinates
+SELECT p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at, l.id, l.address, l.city, l.state, l.country, l.postal_code, l.coordinates
 FROM property p
 LEFT JOIN location l ON p.location_id = l.id
 WHERE p.manager_id = $1
@@ -309,6 +311,7 @@ type GetManagerPropertiesRow struct {
 	NumberOfReviews   sql.NullInt32
 	LocationID        uuid.UUID
 	ManagerID         uuid.UUID
+	TenantID          uuid.NullUUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	ID_2              uuid.NullUUID
@@ -347,6 +350,7 @@ func (q *Queries) GetManagerProperties(ctx context.Context, managerID uuid.UUID)
 			&i.NumberOfReviews,
 			&i.LocationID,
 			&i.ManagerID,
+			&i.TenantID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ID_2,
@@ -371,7 +375,7 @@ func (q *Queries) GetManagerProperties(ctx context.Context, managerID uuid.UUID)
 }
 
 const getProperty = `-- name: GetProperty :one
-SELECT p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.created_at, p.updated_at, l.id, l.address, l.city, l.state, l.country, l.postal_code, l.coordinates
+SELECT p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at, l.id, l.address, l.city, l.state, l.country, l.postal_code, l.coordinates
 FROM property p
 LEFT JOIN location l ON p.location_id = l.id
 WHERE p.id = $1
@@ -395,6 +399,7 @@ type GetPropertyRow struct {
 	NumberOfReviews   sql.NullInt32
 	LocationID        uuid.UUID
 	ManagerID         uuid.UUID
+	TenantID          uuid.NullUUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	ID_2              uuid.NullUUID
@@ -427,6 +432,7 @@ func (q *Queries) GetProperty(ctx context.Context, id uuid.UUID) (GetPropertyRow
 		&i.NumberOfReviews,
 		&i.LocationID,
 		&i.ManagerID,
+		&i.TenantID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ID_2,
@@ -443,50 +449,44 @@ func (q *Queries) GetProperty(ctx context.Context, id uuid.UUID) (GetPropertyRow
 const getTenantProperties = `-- name: GetTenantProperties :many
 SELECT 
   json_build_object(
-    'id', l.id,
-    'rent', l.rent,
-    'deposit', l.deposit,
-    'start_date', l.start_date,
-    'end_date', l.end_date,
-    'property', json_build_object(
-      'id', p.id,
-      'name', p.name,
-      'description', p.description,
-      'price_per_month', p.price_per_month,
-      'security_deposit', p.security_deposit,
-      'application_fee', p.application_fee,
-      'photo_urls', p.photo_urls,
-      'is_pets_allowed', p.is_pets_allowed,
-      'is_parking_included', p.is_parking_included,
-      'beds', p.beds,
-      'baths', p.baths,
-      'square_feet', p.square_feet,
-      'property_type', p.property_type,
-      'average_rating', p.average_rating,
-      'number_of_reviews', p.number_of_reviews,
-      'created_at', p.created_at,
-      'updated_at', p.updated_at,
-      'location', json_build_object(
-        'id', loc.id,
-        'address', loc.address,
-        'city', loc.city,
-        'state', loc.state,
-        'country', loc.country,
-        'postal_code', loc.postal_code,
-        'coordinates', json_build_object(
-          'longitude', ST_X(loc.coordinates::geometry),
-          'latitude', ST_Y(loc.coordinates::geometry)
-        )
+    'id', p.id,
+    'name', p.name,
+    'description', p.description,
+    'price_per_month', p.price_per_month,
+    'security_deposit', p.security_deposit,
+    'application_fee', p.application_fee,
+    'photo_urls', p.photo_urls,
+    'is_pets_allowed', p.is_pets_allowed,
+    'is_parking_included', p.is_parking_included,
+    'beds', p.beds,
+    'baths', p.baths,
+    'square_feet', p.square_feet,
+    'property_type', p.property_type,
+    'average_rating', p.average_rating,
+    'number_of_reviews', p.number_of_reviews,
+    'manager_id', p.manager_id,
+    'tenant_id', p.tenant_id,
+    'created_at', p.created_at,
+    'updated_at', p.updated_at,
+    'location', json_build_object(
+      'id', loc.id,
+      'address', loc.address,
+      'city', loc.city,
+      'state', loc.state,
+      'country', loc.country,
+      'postal_code', loc.postal_code,
+      'coordinates', json_build_object(
+        'longitude', ST_X(loc.coordinates::geometry),
+        'latitude', ST_Y(loc.coordinates::geometry)
       )
     )
-  ) AS lease_data
-FROM lease l
-LEFT JOIN property p ON l.property_id = p.id
-LEFT JOIN location loc ON p.location_id = loc.id
-WHERE l.tenant_id = $1
+  ) AS property_data
+FROM property p
+LEFT JOIN location l ON p.location_id = l.id
+WHERE p.tenant_id = $1
 `
 
-func (q *Queries) GetTenantProperties(ctx context.Context, tenantID uuid.UUID) ([]json.RawMessage, error) {
+func (q *Queries) GetTenantProperties(ctx context.Context, tenantID uuid.NullUUID) ([]json.RawMessage, error) {
 	rows, err := q.db.QueryContext(ctx, getTenantProperties, tenantID)
 	if err != nil {
 		return nil, err
@@ -494,11 +494,11 @@ func (q *Queries) GetTenantProperties(ctx context.Context, tenantID uuid.UUID) (
 	defer rows.Close()
 	var items []json.RawMessage
 	for rows.Next() {
-		var lease_data json.RawMessage
-		if err := rows.Scan(&lease_data); err != nil {
+		var property_data json.RawMessage
+		if err := rows.Scan(&property_data); err != nil {
 			return nil, err
 		}
-		items = append(items, lease_data)
+		items = append(items, property_data)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -507,4 +507,21 @@ func (q *Queries) GetTenantProperties(ctx context.Context, tenantID uuid.UUID) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateProperty = `-- name: UpdateProperty :exec
+UPDATE property
+SET 
+  tenant_id = $1
+WHERE id = $2
+`
+
+type UpdatePropertyParams struct {
+	TenantID uuid.NullUUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) UpdateProperty(ctx context.Context, arg UpdatePropertyParams) error {
+	_, err := q.db.ExecContext(ctx, updateProperty, arg.TenantID, arg.ID)
+	return err
 }

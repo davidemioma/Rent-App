@@ -19,6 +19,7 @@ CREATE TABLE property (
     number_of_reviews INTEGER DEFAULT 0,
     location_id UUID NOT NULL REFERENCES location(id) ON DELETE CASCADE,
     manager_id UUID NOT NULL REFERENCES manager(id) ON DELETE CASCADE,
+    tenant_id UUID REFERENCES tenant(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );

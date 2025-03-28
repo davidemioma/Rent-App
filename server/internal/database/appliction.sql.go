@@ -14,6 +14,118 @@ import (
 	"github.com/lib/pq"
 )
 
+const createApplication = `-- name: CreateApplication :exec
+INSERT INTO application (id, property_id, tenant_id, lease_id, name, email, phone_number, message, status, application_date)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+`
+
+type CreateApplicationParams struct {
+	ID              uuid.UUID
+	PropertyID      uuid.UUID
+	TenantID        uuid.UUID
+	LeaseID         uuid.NullUUID
+	Name            string
+	Email           string
+	PhoneNumber     string
+	Message         sql.NullString
+	Status          ApplicationStatus
+	ApplicationDate time.Time
+}
+
+func (q *Queries) CreateApplication(ctx context.Context, arg CreateApplicationParams) error {
+	_, err := q.db.ExecContext(ctx, createApplication,
+		arg.ID,
+		arg.PropertyID,
+		arg.TenantID,
+		arg.LeaseID,
+		arg.Name,
+		arg.Email,
+		arg.PhoneNumber,
+		arg.Message,
+		arg.Status,
+		arg.ApplicationDate,
+	)
+	return err
+}
+
+const getApplication = `-- name: GetApplication :one
+SELECT a.id, a.property_id, a.tenant_id, a.lease_id, a.name, a.email, a.phone_number, a.message, a.status, a.application_date, p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at
+FROM application a
+JOIN property p ON a.property_id = p.id
+WHERE a.id = $1
+`
+
+type GetApplicationRow struct {
+	ID                uuid.UUID
+	PropertyID        uuid.UUID
+	TenantID          uuid.UUID
+	LeaseID           uuid.NullUUID
+	Name              string
+	Email             string
+	PhoneNumber       string
+	Message           sql.NullString
+	Status            ApplicationStatus
+	ApplicationDate   time.Time
+	ID_2              uuid.UUID
+	Name_2            string
+	Description       string
+	PricePerMonth     string
+	SecurityDeposit   string
+	ApplicationFee    string
+	PhotoUrls         []string
+	IsPetsAllowed     bool
+	IsParkingIncluded bool
+	Beds              int32
+	Baths             string
+	SquareFeet        int32
+	PropertyType      PropertyType
+	AverageRating     sql.NullString
+	NumberOfReviews   sql.NullInt32
+	LocationID        uuid.UUID
+	ManagerID         uuid.UUID
+	TenantID_2        uuid.NullUUID
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
+func (q *Queries) GetApplication(ctx context.Context, id uuid.UUID) (GetApplicationRow, error) {
+	row := q.db.QueryRowContext(ctx, getApplication, id)
+	var i GetApplicationRow
+	err := row.Scan(
+		&i.ID,
+		&i.PropertyID,
+		&i.TenantID,
+		&i.LeaseID,
+		&i.Name,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.Message,
+		&i.Status,
+		&i.ApplicationDate,
+		&i.ID_2,
+		&i.Name_2,
+		&i.Description,
+		&i.PricePerMonth,
+		&i.SecurityDeposit,
+		&i.ApplicationFee,
+		pq.Array(&i.PhotoUrls),
+		&i.IsPetsAllowed,
+		&i.IsParkingIncluded,
+		&i.Beds,
+		&i.Baths,
+		&i.SquareFeet,
+		&i.PropertyType,
+		&i.AverageRating,
+		&i.NumberOfReviews,
+		&i.LocationID,
+		&i.ManagerID,
+		&i.TenantID_2,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserApplications = `-- name: GetUserApplications :many
 SELECT 
     a.id AS application_id,
@@ -24,7 +136,7 @@ SELECT
     a.message AS application_message,
     a.status AS application_status,
     a.application_date AS application_application_date,
-    p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.created_at, p.updated_at,
+    p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at,
     l.id AS property_location_id, 
     l.address AS location_address,
     l.city AS location_city,
@@ -83,6 +195,7 @@ type GetUserApplicationsRow struct {
 	NumberOfReviews            sql.NullInt32
 	LocationID                 uuid.UUID
 	ManagerID                  uuid.UUID
+	TenantID                   uuid.NullUUID
 	CreatedAt                  time.Time
 	UpdatedAt                  time.Time
 	PropertyLocationID         uuid.UUID
@@ -138,6 +251,7 @@ func (q *Queries) GetUserApplications(ctx context.Context, arg GetUserApplicatio
 			&i.NumberOfReviews,
 			&i.LocationID,
 			&i.ManagerID,
+			&i.TenantID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.PropertyLocationID,
@@ -168,4 +282,37 @@ func (q *Queries) GetUserApplications(ctx context.Context, arg GetUserApplicatio
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateApplication = `-- name: UpdateApplication :exec
+UPDATE application
+SET 
+    lease_id = COALESCE($1, lease_id),
+    name = COALESCE($2, name),
+    email = COALESCE($3, email),
+    phone_number = COALESCE($4, phone_number),
+    message = COALESCE($5, message),
+    status = COALESCE($6, status)
+WHERE id = $2
+`
+
+type UpdateApplicationParams struct {
+	LeaseID     uuid.NullUUID
+	Name        string
+	Email       string
+	PhoneNumber string
+	Message     sql.NullString
+	Status      ApplicationStatus
+}
+
+func (q *Queries) UpdateApplication(ctx context.Context, arg UpdateApplicationParams) error {
+	_, err := q.db.ExecContext(ctx, updateApplication,
+		arg.LeaseID,
+		arg.Name,
+		arg.Email,
+		arg.PhoneNumber,
+		arg.Message,
+		arg.Status,
+	)
+	return err
 }

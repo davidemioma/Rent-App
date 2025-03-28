@@ -34,3 +34,24 @@ WHERE
     (CAST($1 AS text) = 'manager' AND p.manager_id = $2)
     OR
     (CAST($1 AS text) = 'tenant' AND a.tenant_id = $2);
+
+-- name: CreateApplication :exec
+INSERT INTO application (id, property_id, tenant_id, lease_id, name, email, phone_number, message, status, application_date)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);    
+
+-- name: GetApplication :one
+SELECT a.*, p.*
+FROM application a
+JOIN property p ON a.property_id = p.id
+WHERE a.id = $1;
+
+-- name: UpdateApplication :exec
+UPDATE application
+SET 
+    lease_id = COALESCE($1, lease_id),
+    name = COALESCE($2, name),
+    email = COALESCE($3, email),
+    phone_number = COALESCE($4, phone_number),
+    message = COALESCE($5, message),
+    status = COALESCE($6, status)
+WHERE id = $2;

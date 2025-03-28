@@ -86,6 +86,10 @@ func (app *application) mount() http.Handler {
 
 			r.Get("/{leaseId}/payments", app.middlewareAuth([]string{"manager", "tenant"}, app.getLeasePayment))
 		})
+
+		r.Route("/applications", func(r chi.Router) {
+			r.Get("/", app.middlewareAuth([]string{"manager", "tenant"}, app.getApplocationList))
+		})
 	})
 
 	return r

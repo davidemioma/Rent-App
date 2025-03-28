@@ -69,6 +69,7 @@ type JsonFilteredProperties struct {
     NumberOfReviews   sql.NullInt32   `json:"numberOfReviews"`
     LocationID        uuid.UUID       `json:"locationId"`
     ManagerID         uuid.UUID       `json:"managerId"`
+	TenantID          uuid.NullUUID   `json:"tenantId"`
     CreatedAt         time.Time       `json:"createdAt"`
     UpdatedAt         time.Time       `json:"updatedAt"`
     Location          json.RawMessage `json:"location"`
@@ -92,6 +93,7 @@ func DBFilteredPropertyToJson(property database.GetFilteredPropertiesRow) JsonFi
 		AverageRating:     property.AverageRating,
 		NumberOfReviews:   property.NumberOfReviews,
 		LocationID:        property.LocationID,
+		TenantID:          property.TenantID,
 		ManagerID:         property.ManagerID,
 		CreatedAt:         property.CreatedAt,
 		UpdatedAt:         property.UpdatedAt,
@@ -143,6 +145,7 @@ type JsonProperty struct {
     LocationID        uuid.UUID       `json:"locationId"`
 	Location          JsonLocation    `json:"location"`
     ManagerID         uuid.UUID       `json:"managerId"`
+	TenantID          uuid.NullUUID   `json:"tenantId"`
     CreatedAt         time.Time       `json:"createdAt"`
     UpdatedAt         time.Time       `json:"updatedAt"`
 }
@@ -151,15 +154,6 @@ type FavoriteProperty struct {
 	ID         uuid.UUID    `json:"id"`
 	PropertyId uuid.UUID    `json:"propertyId"`
     TenantId   uuid.UUID    `json:"tenantId"`
-	Property   JsonProperty `json:"property"`
-}
-
-type JsonLeaseProperty struct {
-	ID         uuid.UUID    `json:"id"`
-	Rent       string       `json:"rent"`
-	Deposit    string       `json:"deposit"`
-	StartDate  time.Time    `json:"start_date"`
-	EndDate    time.Time    `json:"end_date"`
 	Property   JsonProperty `json:"property"`
 }
 
@@ -182,6 +176,7 @@ func DBpropertyToJson(property database.GetPropertyRow, lat float64, lng float64
 		NumberOfReviews:   property.NumberOfReviews,
 		LocationID:        property.LocationID,
 		ManagerID:         property.ManagerID,
+		TenantID:          property.TenantID,
 		CreatedAt:         property.CreatedAt,
 		UpdatedAt:         property.UpdatedAt,
 		Location:          JsonLocation{
@@ -273,6 +268,7 @@ func DBLeaseToJson(leases []database.GetPropertyLeasesRow) []JsonLease {
 				NumberOfReviews:   lease.NumberOfReviews,
 				LocationID:        lease.LocationID,
 				ManagerID:         lease.ManagerID,
+				TenantID:          lease.TenantID_2,
 				CreatedAt:         lease.CreatedAt,
 				UpdatedAt:         lease.UpdatedAt,
 			},
@@ -335,6 +331,7 @@ type JsonApplication struct {
     AverageRating              sql.NullString             `json:"averageRating"`
     NumberOfReviews            sql.NullInt32              `json:"numberOfReviews"`
     LocationID                 uuid.UUID                  `json:"locationId"`
+	TenantID                   uuid.NullUUID              `json:"tenantId"`
     ManagerID                  uuid.UUID                  `json:"managerId"`
     CreatedAt                  time.Time                  `json:"createdAt"`
     UpdatedAt                  time.Time                  `json:"updatedAt"`
@@ -354,4 +351,75 @@ type JsonApplication struct {
     TenantName                 string                     `json:"tenantName"`
     TenantEmail                string                     `json:"tenantEmail"`
     TenantPhonenumber          string                     `json:"tenantPhonenumber"`
+}
+
+func DBApplicationsToJson(applications []database.GetUserApplicationsRow) []JsonApplication {
+	var jsonApplications []JsonApplication
+
+	for _, application := range applications{
+		jsonApplications = append(jsonApplications, JsonApplication{
+			ApplicationID: application.ApplicationID,
+			LeaseID: application.LeaseID,
+			ApplicationName: application.ApplicationName,
+			ApplicationEmail: application.ApplicationEmail,
+			ApplicationPhoneNumber: application.ApplicationPhoneNumber,
+			ApplicationMessage: application.ApplicationMessage,
+			ApplicationStatus: application.ApplicationStatus,
+			ApplicationApplicationDate: application.ApplicationApplicationDate,
+			ID: application.ID,
+			Name: application.Name,
+			Description: application.Description,
+			PricePerMonth: application.PricePerMonth,
+			SecurityDeposit: application.SecurityDeposit,
+			ApplicationFee: application.ApplicationFee,
+			PhotoUrls: application.PhotoUrls,
+			IsPetsAllowed: application.IsPetsAllowed,
+			IsParkingIncluded: application.IsParkingIncluded,
+			Beds: application.Beds,
+			Baths: application.Baths,
+			SquareFeet: application.SquareFeet,
+			PropertyType: application.PropertyType,
+			AverageRating: application.AverageRating,
+			NumberOfReviews: application.NumberOfReviews,
+			LocationID: application.LocationID,
+			TenantID: application.TenantID,
+			ManagerID: application.ManagerID,
+			CreatedAt: application.CreatedAt,
+			UpdatedAt: application.UpdatedAt,
+			PropertyLocationID: application.PropertyLocationID,
+			LocationAddress: application.LocationAddress,
+			LocationCity: application.LocationCity,
+			LocationState: application.LocationState,
+			LocationCountry: application.LocationCountry,
+			LocationPostalCode: application.LocationPostalCode,
+			ManagerUserID: application.ManagerUserID,
+			ManagerCognitoID: application.ManagerCognitoID,
+			ManagerName: application.ManagerName,
+			ManagerEmail: application.ManagerEmail,
+			ManagerPhonenumber: application.ManagerPhonenumber,
+			TenantUserID: application.TenantUserID,
+			TenantCognitoID: application.TenantCognitoID,
+			TenantName: application.TenantName,
+			TenantEmail: application.TenantEmail,
+			TenantPhonenumber:  application.TenantPhonenumber,
+		})
+	}
+
+	return jsonApplications
+}
+
+type ApplictionLease struct {
+	ID              uuid.UUID    `json:"id"`  
+	PropertyID      uuid.UUID    `json:"propertyId"` 
+	TenantID        uuid.UUID    `json:"tenantId"` 
+	Rent            string       `json:"rent"` 
+	Deposit         string       `json:"deposit"` 
+	StartDate       time.Time    `json:"startDate"` 
+	EndDate         time.Time    `json:"endDate"` 
+	NextPaymentDate time.Time    `json:"nextPaymentDate"`
+}	
+
+type ApplicationReturnType struct {
+	Details JsonApplication  `json:"details"` 
+	Lease   ApplictionLease  `json:"lease"`
 }

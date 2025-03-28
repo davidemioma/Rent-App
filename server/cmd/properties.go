@@ -256,7 +256,10 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 	// Get properties
 	var propertiesWithLocation []utils.JsonProperty
 
-	data, err := app.dbQuery.GetTenantProperties(r.Context(), tenant.ID)
+	data, err := app.dbQuery.GetTenantProperties(r.Context(), uuid.NullUUID{
+		UUID: tenant.ID,
+		Valid: tenant.ID != uuid.Nil,
+	})
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -272,12 +275,12 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	var leases []utils.JsonLeaseProperty
+	var properties []utils.JsonProperty
 
 	for _, raw := range data {
-		var lease utils.JsonLeaseProperty
+		var property utils.JsonProperty
 
-		if err := json.Unmarshal(raw, &lease); err != nil {
+		if err := json.Unmarshal(raw, &property); err != nil {
 			log.Printf("json.Unmarshal getCurrentResidences err: %v", err)
 
 			utils.RespondWithError(w, http.StatusNotFound, "Unable to get properties!")
@@ -285,11 +288,11 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		
-		leases = append(leases, lease)
+		properties = append(properties, property)
 	}
 
-	for _, lease := range leases {
-		coords, err := app.dbQuery.GetLocationCoordinates(r.Context(), lease.Property.ID)
+	for _, property := range properties {
+		coords, err := app.dbQuery.GetLocationCoordinates(r.Context(), property.ID)
 
 		if err != nil {
 			log.Printf("getProperty (GetLocationCoordinates) err: %v", err)
@@ -304,32 +307,32 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 		lat := coords.Latitude.(float64)
 
 		propertiesWithLocation = append(propertiesWithLocation, utils.JsonProperty{
-			ID: lease.Property.ID,
-			Name: lease.Property.Name,
-			Description:       lease.Property.Description,
-			PricePerMonth:     lease.Property.PricePerMonth,
-			SecurityDeposit:   lease.Property.SecurityDeposit,
-			ApplicationFee:    lease.Property.ApplicationFee,
-			PhotoUrls:         lease.Property.PhotoUrls,
-			IsPetsAllowed:     lease.Property.IsPetsAllowed,
-			IsParkingIncluded: lease.Property.IsParkingIncluded,
-			Beds:              lease.Property.Beds,
-			Baths:             lease.Property.Baths,
-			SquareFeet:        lease.Property.SquareFeet,
-			PropertyType:      string(lease.Property.PropertyType),
-			AverageRating:     lease.Property.AverageRating,
-			NumberOfReviews:   lease.Property.NumberOfReviews,
-			LocationID:        lease.Property.LocationID,
-			ManagerID:         lease.Property.ManagerID,
-			CreatedAt:         lease.Property.CreatedAt,
-			UpdatedAt:         lease.Property.UpdatedAt,
+			ID: property.ID,
+			Name: property.Name,
+			Description:       property.Description,
+			PricePerMonth:     property.PricePerMonth,
+			SecurityDeposit:   property.SecurityDeposit,
+			ApplicationFee:    property.ApplicationFee,
+			PhotoUrls:         property.PhotoUrls,
+			IsPetsAllowed:     property.IsPetsAllowed,
+			IsParkingIncluded: property.IsParkingIncluded,
+			Beds:              property.Beds,
+			Baths:             property.Baths,
+			SquareFeet:        property.SquareFeet,
+			PropertyType:      string(property.PropertyType),
+			AverageRating:     property.AverageRating,
+			NumberOfReviews:   property.NumberOfReviews,
+			LocationID:        property.LocationID,
+			ManagerID:         property.ManagerID,
+			CreatedAt:         property.CreatedAt,
+			UpdatedAt:         property.UpdatedAt,
 			Location:          utils.JsonLocation{
-				ID: lease.Property.LocationID,
-				Address: lease.Property.Location.Address,
-				City: lease.Property.Location.City,
-				State: lease.Property.Location.State,
-				Country: lease.Property.Location.Country,
-				PostalCode: lease.Property.Location.PostalCode,
+				ID: property.Location.ID,
+				Address: property.Location.Address,
+				City: property.Location.City,
+				State: property.Location.State,
+				Country: property.Location.Country,
+				PostalCode: property.Location.PostalCode,
 				Coordinates: utils.Coordinates{
 					Latitude: lat,
 					Longitude: lng,
