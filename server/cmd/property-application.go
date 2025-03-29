@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (app *application) getApplocationList(w http.ResponseWriter, r *http.Request, user utils.User) {
+func (app *application) getAllApplications(w http.ResponseWriter, r *http.Request, user utils.User) {
 	var userRole string
 
 	var applicationsWithLease []utils.ApplicationReturnType
@@ -150,15 +150,6 @@ func (app *application) createApplication(w http.ResponseWriter, r *http.Request
 			return err
 		}
 
-		// Check if property has a lease already
-		leaseExist, err := app.dbQuery.GetLeaseByProperty(r.Context(), property.ID)
-
-		if leaseExist.ID != uuid.Nil || err == nil {	
-			utils.RespondWithError(w, http.StatusUnauthorized, "Property not found! You cannot create an application.")
-
-			return err
-		}
-
 		// Create Lease
 		lease, err := app.dbQuery.CreateLease(r.Context(), database.CreateLeaseParams{
 			ID: uuid.New(),
@@ -225,7 +216,7 @@ func (app *application) updateApplicationStatus(w http.ResponseWriter, r *http.R
 
 	// Get the request body
 	type Params struct {
-		Status          string    `json:"status"`
+		Status string `json:"status"`
 	}
 
 	// Validate Body
@@ -238,4 +229,101 @@ func (app *application) updateApplicationStatus(w http.ResponseWriter, r *http.R
 
 		return
 	}
+
+	// Check if application exists
+	application, err := app.dbQuery.GetApplication(r.Context(), uuid.MustParse(id))
+
+	if err != nil {
+		log.Printf("updateApplicationStatus (GetApplication) DB err: %v", err)
+		
+		utils.RespondWithError(w, http.StatusNotFound, "Application not found!")
+
+		return 
+	}
+
+	// if status is approved create a new lease and update property tenant Id.
+	if params.Status == string(database.ApplicationStatusAPPROVED) {
+		tsxErr := app.WithTx(r.Context(), func(q *database.Queries) error {
+			newLease, err := app.dbQuery.CreateLease(r.Context(), database.CreateLeaseParams{
+				ID: uuid.New(),
+				PropertyID: application.PropertyID,
+				TenantID: application.TenantID,
+				Rent: application.PricePerMonth,
+				Deposit: application.SecurityDeposit,
+				StartDate: time.Now(),
+				EndDate: time.Now().AddDate(1, 0, 0),
+			})
+
+			if err != nil {
+				log.Printf("updateApplicationStatus (CreateLease) DB err: %v", err)
+				
+				utils.RespondWithError(w, http.StatusInternalServerError, "Unable to create lease. Try again")
+
+				return err
+			}
+
+			// Update property tenant
+			propertyErr := app.dbQuery.UpdateProperty(r.Context(), database.UpdatePropertyParams{
+				ID: application.PropertyID,
+				TenantID: uuid.NullUUID{
+					UUID: newLease.TenantID,
+					Valid: newLease.TenantID != uuid.Nil,
+				},
+			})
+
+			if propertyErr != nil {
+				log.Printf("updateApplicationStatus (UpdateProperty) DB err: %v", err)
+				
+				utils.RespondWithError(w, http.StatusInternalServerError, "Unable to update property. Try again")
+
+				return propertyErr
+			}
+
+			// Update application status and lease Id.
+			appErr := app.dbQuery.UpdateApplication(r.Context(), database.UpdateApplicationParams{
+				LeaseID: uuid.NullUUID{
+					UUID: newLease.ID,
+					Valid: newLease.ID != uuid.Nil,
+				},
+				Status: database.ApplicationStatus(params.Status),
+			})
+
+			if appErr != nil {
+				log.Printf("updateApplicationStatus (UpdateApplication) DB err: %v", appErr)
+				
+				utils.RespondWithError(w, http.StatusInternalServerError, "Unable to update application. Try again")
+
+				return appErr
+			}
+
+			return nil
+		})
+
+		if tsxErr != nil {
+			log.Printf("updateApplicationStatus (transaction) DB err: %v", err)
+				
+			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to update application. Try again")
+
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, "Application Updated!")
+
+		return
+	}
+
+	// Update status
+	dbErr := app.dbQuery.UpdateApplication(r.Context(), database.UpdateApplicationParams{
+		Status: database.ApplicationStatus(params.Status),
+	})
+
+	if dbErr != nil {
+		log.Printf("updateApplicationStatus (UpdateApplication) DB err: %v", dbErr)
+		
+		utils.RespondWithError(w, http.StatusInternalServerError, "Unable to update application! Try again.")
+
+		return 
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, "Application Updated!")
 }

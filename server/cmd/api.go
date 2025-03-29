@@ -88,7 +88,11 @@ func (app *application) mount() http.Handler {
 		})
 
 		r.Route("/applications", func(r chi.Router) {
-			r.Get("/", app.middlewareAuth([]string{"manager", "tenant"}, app.getApplocationList))
+			r.Get("/", app.middlewareAuth([]string{"manager", "tenant"}, app.getAllApplications))
+
+			r.Post("/", app.middlewareAuth([]string{"tenant"}, app.createApplication))
+
+			r.Patch("/{id}/status", app.middlewareAuth([]string{"manager"}, app.updateApplicationStatus))
 		})
 	})
 
