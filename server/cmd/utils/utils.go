@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -170,61 +171,86 @@ func ParsePropertiesQueryParams(r *http.Request) (database.GetFilteredProperties
 	}
 
 	// Price range - keep as string
-	params.PriceMin = query.Get("priceMin")
+	price_min := query.Get("priceMin")
 
-    params.PriceMax = query.Get("priceMax")
+	params.PriceMin = sql.NullString{
+		String: price_min,
+		Valid: len(price_min) > 0,
+	}
+
+	price_max := query.Get("priceMax")
+
+    params.PriceMax  = sql.NullString{
+		String: price_max,
+		Valid: len(price_max) > 0,
+	}
 
 	// Beds and baths
-	if beds := query.Get("beds"); beds != "" && beds != "any" {
-        if val, err := strconv.ParseInt(beds, 10, 32); err == nil {
-            params.Beds = int32(val)
-        }
-    }
+	beds := query.Get("beds")
 
-    if baths := query.Get("baths"); baths != "" && baths != "any" {
-        if val, err := strconv.ParseInt(baths, 10, 32); err == nil {
-            params.Baths = int32(val)
-        }
-    }
+    params.Beds  = sql.NullString{
+		String: beds,
+		Valid: len(beds) > 0,
+	}
+
+    baths := query.Get("baths")
+
+    params.Baths  = sql.NullString{
+		String: baths,
+		Valid: len(baths) > 0,
+	}
 
 	// Square footage
 	if sqMin := query.Get("squareFeetMin"); sqMin != "" {
         if val, err := strconv.ParseInt(sqMin, 10, 32); err == nil {
-            params.SquareFeetMin = int32(val)
+            params.SquareFeetMin = sql.NullInt32{
+				Int32: int32(val),
+				Valid: val > 0,
+			}
         }
     }
 
     if sqMax := query.Get("squareFeetMax"); sqMax != "" {
         if val, err := strconv.ParseInt(sqMax, 10, 32); err == nil {
-            params.SquareFeetMax = int32(val)
+            params.SquareFeetMax = sql.NullInt32{
+				Int32: int32(val),
+				Valid: val > 0,
+			}
         }
     }
 
 	// Property type
-	params.PropertyType = query.Get("propertyType")
+	property_type := query.Get("propertyType")
 
-	// Amenities
-	if amenities := query.Get("amenities"); amenities != "" && amenities != "any" {
-        params.Amenities = strings.Split(amenities, ",")
-    }
+	params.PropertyType = sql.NullString{
+		String: property_type,
+		Valid: len(property_type) > 0,
+	}
 
 	// Available from 
-     if availFrom := query.Get("availableFrom"); availFrom != "" && availFrom != "any" {
-        if t, err := time.Parse(time.RFC3339, availFrom); err == nil {
-            params.AvailableFrom = t
-        }
-    }
+	availFrom := query.Get("availableFrom")
+
+	params.AvailableFrom = sql.NullString{
+		String: availFrom,
+		Valid: len(availFrom) > 0,
+	}
 
 	 // Coordinate
     if lat := query.Get("latitude"); lat != "" {
         if val, err := strconv.ParseFloat(lat, 64); err == nil {
-            params.Latitude = val
+            params.Latitude = sql.NullFloat64{
+				Float64: val,
+				Valid: val > 0,
+			}
         }
     }
 
     if lng := query.Get("longitude"); lng != "" {
         if val, err := strconv.ParseFloat(lng, 64); err == nil {
-            params.Longitude = val
+            params.Longitude = sql.NullFloat64{
+				Float64: val,
+				Valid: val > 0,
+			}
         }
     }
 

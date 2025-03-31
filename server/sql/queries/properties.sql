@@ -12,7 +12,7 @@ FROM location
 WHERE id = $1;
 
 -- name: GetFilteredProperties :many
-SELECT 
+SELECT
   p.*,
   json_build_object(
     'id', l.id,
@@ -28,38 +28,97 @@ SELECT
   ) as location
 FROM property p
 JOIN location l ON p.location_id = l.id
-WHERE 
-  (CAST(@favorite_ids AS uuid[]) IS NULL OR p.id = ANY(CAST(@favorite_ids AS uuid[])))
-  AND (CAST(@price_min AS numeric) IS NULL OR p.price_per_month >= CAST(@price_min AS numeric))
-  AND (CAST(@price_max AS numeric) IS NULL OR p.price_per_month <= CAST(@price_max AS numeric))
-  AND (CAST(@beds AS int) IS NULL OR @beds = 'any' OR p.beds >= CAST(@beds AS int))
-  AND (CAST(@baths AS int) IS NULL OR @baths = 'any' OR p.baths >= CAST(@baths AS int))
-  AND (CAST(@square_feet_min AS int) IS NULL OR p.square_feet >= CAST(@square_feet_min AS int))
-  AND (CAST(@square_feet_max AS int) IS NULL OR p.square_feet <= CAST(@square_feet_max AS int))
-  AND (
-    @property_type IS NULL OR 
-    @property_type = 'any' OR 
-    p.property_type = CAST(@property_type AS property_type)
-  )
-  AND (array_length(@amenities::text[], 1) IS NULL OR @amenities = '{"any"}' OR p.amenities @> CAST(@amenities AS text[]))
-  AND (
-    CAST(@available_from AS timestamp) IS NULL OR 
-    @available_from = 'any' OR
-    EXISTS (
-      SELECT 1 FROM lease le 
-      WHERE le.property_id = p.id 
-      AND le.start_date <= CAST(@available_from AS timestamp)
+WHERE
+  -- Favorite IDs: Standard optional array filter
+  (sqlc.narg(favorite_ids)::uuid[] IS NULL OR p.id = ANY(sqlc.narg(favorite_ids)::uuid[]))
+
+  -- Price Min: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF(sqlc.narg(price_min)::text, 'any') IS NULL OR p.price_per_month >= CAST(NULLIF(sqlc.narg(price_min)::text, 'any') AS numeric))
+
+  -- Price Max: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF(sqlc.narg(price_max)::text, 'any') IS NULL OR p.price_per_month <= CAST(NULLIF(sqlc.narg(price_max)::text, 'any') AS numeric))
+
+  -- Beds: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF(sqlc.narg(beds)::text, 'any') IS NULL OR p.beds >= CAST(NULLIF(sqlc.narg(beds)::text, 'any') AS int))
+
+  -- Baths: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF(sqlc.narg(baths)::text, 'any') IS NULL OR p.baths >= CAST(NULLIF(sqlc.narg(baths)::text, 'any') AS int))
+
+  -- Square Feet Min: Standard optional integer filter (assuming no 'any')
+  AND (sqlc.narg(square_feet_min)::int IS NULL OR p.square_feet >= sqlc.narg(square_feet_min)::int)
+
+   -- Square Feet Max: Standard optional integer filter (assuming no 'any')
+  AND (sqlc.narg(square_feet_max)::int IS NULL OR p.square_feet <= sqlc.narg(square_feet_max)::int)
+
+  -- Property Type: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF(sqlc.narg(property_type)::text, 'any') IS NULL OR p.property_type = CAST(NULLIF(sqlc.narg(property_type)::text, 'any') AS property_type))
+
+  -- Available From: Ignore if NULL or 'any', otherwise check lease existence
+  AND (NULLIF(sqlc.narg(available_from)::text, 'any') IS NULL OR EXISTS (
+      SELECT 1 FROM lease le
+      WHERE le.property_id = p.id
+      AND le.start_date <= CAST(NULLIF(sqlc.narg(available_from)::text, 'any') AS timestamp)
     )
   )
+
+  -- Location: User-specified ST_DWithin logic
   AND (
-    CAST(@latitude AS float) IS NULL OR 
-    CAST(@longitude AS float) IS NULL OR
+    sqlc.narg(latitude)::float IS NULL OR
+    sqlc.narg(longitude)::float IS NULL OR
     ST_DWithin(
       l.coordinates::geometry,
-      ST_SetSRID(ST_MakePoint(CAST(@longitude AS float), CAST(@latitude AS float)), 4326),
-      1000 / 111.0
+      ST_SetSRID(ST_MakePoint(sqlc.arg(longitude)::float, sqlc.arg(latitude)::float), 4326),
+      1000 / 111.0 -- User's specified approximate distance in degrees
     )
   );
+-- SELECT 
+--   p.*,
+--   json_build_object(
+--     'id', l.id,
+--     'address', l.address,
+--     'city', l.city,
+--     'state', l.state,
+--     'country', l.country,
+--     'postal_code', l.postal_code,
+--     'coordinates', json_build_object(
+--       'longitude', ST_X(l.coordinates::geometry),
+--       'latitude', ST_Y(l.coordinates::geometry)
+--     )
+--   ) as location
+-- FROM property p
+-- JOIN location l ON p.location_id = l.id
+-- WHERE 
+--   (CAST(@favorite_ids AS uuid[]) IS NULL OR p.id = ANY(CAST(@favorite_ids AS uuid[])))
+--   AND (CAST(@price_min AS numeric) IS NULL OR @price_min = 'any' OR p.price_per_month >= CAST(@price_min AS numeric))
+--   AND (CAST(@price_max AS numeric) IS NULL OR @price_min = 'any' OR p.price_per_month <= CAST(@price_max AS numeric))
+--   AND (CAST(@beds AS int) IS NULL OR @beds = 'any' OR p.beds >= CAST(@beds AS int))
+--   AND (CAST(@baths AS int) IS NULL OR @baths = 'any' OR p.baths >= CAST(@baths AS int))1
+--   AND (CAST(@square_feet_min AS int) IS NULL OR p.square_feet >= CAST(@square_feet_min AS int))
+--   AND (CAST(@square_feet_max AS int) IS NULL OR p.square_feet <= CAST(@square_feet_max AS int))
+--   AND (
+--     @property_type IS NULL OR 
+--     @property_type = 'any' OR 
+--     p.property_type = CAST(@property_type AS property_type)
+--   )
+--   AND (array_length(@amenities::text[], 1) IS NULL OR @amenities = '{"any"}' OR p.amenities @> CAST(@amenities AS text[]))
+--   AND (
+--     CAST(@available_from AS timestamp) IS NULL OR 
+--     @available_from = 'any' OR
+--     EXISTS (
+--       SELECT 1 FROM lease le 
+--       WHERE le.property_id = p.id 
+--       AND le.start_date <= CAST(@available_from AS timestamp)
+--     )
+--   )
+--   AND (
+--     CAST(@latitude AS float) IS NULL OR 
+--     CAST(@longitude AS float) IS NULL OR
+--     ST_DWithin(
+--       l.coordinates::geometry,
+--       ST_SetSRID(ST_MakePoint(CAST(@longitude AS float), CAST(@latitude AS float)), 4326),
+--       1000 / 111.0
+--     )
+--   );
 
 -- name: CreateLocation :one
 INSERT INTO location (id, address, city, state, country, postal_code, coordinates)

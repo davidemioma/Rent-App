@@ -57,11 +57,9 @@ const FiltersBar = () => {
     if (key === "priceRange" || key === "squareFeet") {
       const currentRange = [...filters[key]];
 
-      if (isMin) {
-        const index = isMin ? 0 : 1;
+      const index = isMin ? 0 : 1;
 
-        currentRange[index] = value === "any" ? null : Number(value);
-      }
+      currentRange[index] = value === "any" ? null : Number(value);
 
       newValue = currentRange;
     } else if (key === "coordinates") {

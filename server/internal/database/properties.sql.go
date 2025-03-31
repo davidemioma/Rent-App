@@ -16,6 +16,7 @@ import (
 )
 
 const createLocation = `-- name: CreateLocation :one
+
 INSERT INTO location (id, address, city, state, country, postal_code, coordinates)
 VALUES ($1, $2, $3, $4, $5, $6, ST_SetSRID(ST_MakePoint($7, $8), 4326))
 RETURNING id, address, city, state, country, postal_code, ST_AsText(coordinates) as coordinates
@@ -42,6 +43,57 @@ type CreateLocationRow struct {
 	Coordinates interface{}
 }
 
+// SELECT
+//
+//	p.*,
+//	json_build_object(
+//	  'id', l.id,
+//	  'address', l.address,
+//	  'city', l.city,
+//	  'state', l.state,
+//	  'country', l.country,
+//	  'postal_code', l.postal_code,
+//	  'coordinates', json_build_object(
+//	    'longitude', ST_X(l.coordinates::geometry),
+//	    'latitude', ST_Y(l.coordinates::geometry)
+//	  )
+//	) as location
+//
+// FROM property p
+// JOIN location l ON p.location_id = l.id
+// WHERE
+//
+//	(CAST(@favorite_ids AS uuid[]) IS NULL OR p.id = ANY(CAST(@favorite_ids AS uuid[])))
+//	AND (CAST(@price_min AS numeric) IS NULL OR @price_min = 'any' OR p.price_per_month >= CAST(@price_min AS numeric))
+//	AND (CAST(@price_max AS numeric) IS NULL OR @price_min = 'any' OR p.price_per_month <= CAST(@price_max AS numeric))
+//	AND (CAST(@beds AS int) IS NULL OR @beds = 'any' OR p.beds >= CAST(@beds AS int))
+//	AND (CAST(@baths AS int) IS NULL OR @baths = 'any' OR p.baths >= CAST(@baths AS int))1
+//	AND (CAST(@square_feet_min AS int) IS NULL OR p.square_feet >= CAST(@square_feet_min AS int))
+//	AND (CAST(@square_feet_max AS int) IS NULL OR p.square_feet <= CAST(@square_feet_max AS int))
+//	AND (
+//	  @property_type IS NULL OR
+//	  @property_type = 'any' OR
+//	  p.property_type = CAST(@property_type AS property_type)
+//	)
+//	AND (array_length(@amenities::text[], 1) IS NULL OR @amenities = '{"any"}' OR p.amenities @> CAST(@amenities AS text[]))
+//	AND (
+//	  CAST(@available_from AS timestamp) IS NULL OR
+//	  @available_from = 'any' OR
+//	  EXISTS (
+//	    SELECT 1 FROM lease le
+//	    WHERE le.property_id = p.id
+//	    AND le.start_date <= CAST(@available_from AS timestamp)
+//	  )
+//	)
+//	AND (
+//	  CAST(@latitude AS float) IS NULL OR
+//	  CAST(@longitude AS float) IS NULL OR
+//	  ST_DWithin(
+//	    l.coordinates::geometry,
+//	    ST_SetSRID(ST_MakePoint(CAST(@longitude AS float), CAST(@latitude AS float)), 4326),
+//	    1000 / 111.0
+//	  )
+//	);
 func (q *Queries) CreateLocation(ctx context.Context, arg CreateLocationParams) (CreateLocationRow, error) {
 	row := q.db.QueryRowContext(ctx, createLocation,
 		arg.ID,
@@ -119,7 +171,7 @@ func (q *Queries) CreateProperty(ctx context.Context, arg CreatePropertyParams) 
 }
 
 const getFilteredProperties = `-- name: GetFilteredProperties :many
-SELECT 
+SELECT
   p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at,
   json_build_object(
     'id', l.id,
@@ -135,53 +187,63 @@ SELECT
   ) as location
 FROM property p
 JOIN location l ON p.location_id = l.id
-WHERE 
-  (CAST($1 AS uuid[]) IS NULL OR p.id = ANY(CAST($1 AS uuid[])))
-  AND (CAST($2 AS numeric) IS NULL OR p.price_per_month >= CAST($2 AS numeric))
-  AND (CAST($3 AS numeric) IS NULL OR p.price_per_month <= CAST($3 AS numeric))
-  AND (CAST($4 AS int) IS NULL OR $4 = 'any' OR p.beds >= CAST($4 AS int))
-  AND (CAST($5 AS int) IS NULL OR $5 = 'any' OR p.baths >= CAST($5 AS int))
-  AND (CAST($6 AS int) IS NULL OR p.square_feet >= CAST($6 AS int))
-  AND (CAST($7 AS int) IS NULL OR p.square_feet <= CAST($7 AS int))
-  AND (
-    $8 IS NULL OR 
-    $8 = 'any' OR 
-    p.property_type = CAST($8 AS property_type)
-  )
-  AND (array_length($9::text[], 1) IS NULL OR $9 = '{"any"}' OR p.amenities @> CAST($9 AS text[]))
-  AND (
-    CAST($10 AS timestamp) IS NULL OR 
-    $10 = 'any' OR
-    EXISTS (
-      SELECT 1 FROM lease le 
-      WHERE le.property_id = p.id 
-      AND le.start_date <= CAST($10 AS timestamp)
+WHERE
+  -- Favorite IDs: Standard optional array filter
+  ($1::uuid[] IS NULL OR p.id = ANY($1::uuid[]))
+
+  -- Price Min: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF($2::text, 'any') IS NULL OR p.price_per_month >= CAST(NULLIF($2::text, 'any') AS numeric))
+
+  -- Price Max: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF($3::text, 'any') IS NULL OR p.price_per_month <= CAST(NULLIF($3::text, 'any') AS numeric))
+
+  -- Beds: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF($4::text, 'any') IS NULL OR p.beds >= CAST(NULLIF($4::text, 'any') AS int))
+
+  -- Baths: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF($5::text, 'any') IS NULL OR p.baths >= CAST(NULLIF($5::text, 'any') AS int))
+
+  -- Square Feet Min: Standard optional integer filter (assuming no 'any')
+  AND ($6::int IS NULL OR p.square_feet >= $6::int)
+
+   -- Square Feet Max: Standard optional integer filter (assuming no 'any')
+  AND ($7::int IS NULL OR p.square_feet <= $7::int)
+
+  -- Property Type: Ignore if NULL or 'any', otherwise compare
+  AND (NULLIF($8::text, 'any') IS NULL OR p.property_type = CAST(NULLIF($8::text, 'any') AS property_type))
+
+  -- Available From: Ignore if NULL or 'any', otherwise check lease existence
+  AND (NULLIF($9::text, 'any') IS NULL OR EXISTS (
+      SELECT 1 FROM lease le
+      WHERE le.property_id = p.id
+      AND le.start_date <= CAST(NULLIF($9::text, 'any') AS timestamp)
     )
   )
+
+  -- Location: User-specified ST_DWithin logic
   AND (
-    CAST($11 AS float) IS NULL OR 
-    CAST($12 AS float) IS NULL OR
+    $10::float IS NULL OR
+    $11::float IS NULL OR
     ST_DWithin(
       l.coordinates::geometry,
-      ST_SetSRID(ST_MakePoint(CAST($12 AS float), CAST($11 AS float)), 4326),
-      1000 / 111.0
+      ST_SetSRID(ST_MakePoint($11::float, $10::float), 4326),
+      1000 / 111.0 -- User's specified approximate distance in degrees
     )
   )
 `
 
 type GetFilteredPropertiesParams struct {
 	FavoriteIds   []uuid.UUID
-	PriceMin      string
-	PriceMax      string
-	Beds          int32
-	Baths         int32
-	SquareFeetMin int32
-	SquareFeetMax int32
-	PropertyType  interface{}
-	Amenities     []string
-	AvailableFrom time.Time
-	Latitude      float64
-	Longitude     float64
+	PriceMin      sql.NullString
+	PriceMax      sql.NullString
+	Beds          sql.NullString
+	Baths         sql.NullString
+	SquareFeetMin sql.NullInt32
+	SquareFeetMax sql.NullInt32
+	PropertyType  sql.NullString
+	AvailableFrom sql.NullString
+	Latitude      sql.NullFloat64
+	Longitude     sql.NullFloat64
 }
 
 type GetFilteredPropertiesRow struct {
@@ -218,7 +280,6 @@ func (q *Queries) GetFilteredProperties(ctx context.Context, arg GetFilteredProp
 		arg.SquareFeetMin,
 		arg.SquareFeetMax,
 		arg.PropertyType,
-		pq.Array(arg.Amenities),
 		arg.AvailableFrom,
 		arg.Latitude,
 		arg.Longitude,

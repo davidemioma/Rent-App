@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import Map from "./_components/Map";
 import { NAVBAR_HEIGHT } from "@/lib/constants";
 import FiltersBar from "./_components/FiltersBar";
 import useFiltersState from "@/hooks/use-filters-state";
@@ -30,7 +31,7 @@ export default function SearchPage() {
           <FiltersSidebar />
         </div>
 
-        <div>Map</div>
+        <Map />
 
         <div className="basis-4/12 overflow-y-auto">Listings</div>
       </div>

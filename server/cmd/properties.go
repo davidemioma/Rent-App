@@ -67,13 +67,21 @@ func (app *application) getProperties(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("Params: ", params)
+
 	// Get properties
 	properties, err := app.dbQuery.GetFilteredProperties(r.Context(), params)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.RespondWithJSON(w, http.StatusOK, []utils.JsonFilteredProperties{})
+
+			return
+		}
+
 		log.Printf("getProperties DB err: %v", err)
 		
-		utils.RespondWithError(w, http.StatusBadRequest, "Unable to get properties. Try again")
+		utils.RespondWithError(w, http.StatusNotFound, "Unable to get properties. Try again")
 
 		return
 	}
