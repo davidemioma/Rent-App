@@ -231,8 +231,8 @@ const FiltersBar = () => {
           <Button
             variant="ghost"
             className={cn(
-              "px-3 py-1 rounded-none rounded-l-xl hover:bg-primary-600 hover:text-primary-50",
-              viewMode === "list" ? "bg-primary-700 text-primary-50" : ""
+              "px-3 py-1 rounded-none rounded-l-xl hover:bg-[#57575f] hover:text-[#fcfcfc]",
+              viewMode === "list" ? "bg-[#27272a] text-[#fcfcfc]" : ""
             )}
             onClick={() => setViewMode("list")}
           >
@@ -242,8 +242,8 @@ const FiltersBar = () => {
           <Button
             variant="ghost"
             className={cn(
-              "px-3 py-1 rounded-none rounded-r-xl hover:bg-primary-600 hover:text-primary-50",
-              viewMode === "grid" ? "bg-primary-700 text-primary-50" : ""
+              "px-3 py-1 rounded-none rounded-r-xl hover:bg-[#57575f] hover:text-[#fcfcfc]",
+              viewMode === "grid" ? "bg-[#27272a] text-[#fcfcfc]" : ""
             )}
             onClick={() => setViewMode("grid")}
           >

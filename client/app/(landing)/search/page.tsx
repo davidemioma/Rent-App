@@ -2,13 +2,30 @@
 
 import { cn } from "@/lib/utils";
 import Map from "./_components/Map";
+import Listings from "./_components/Listings";
 import { NAVBAR_HEIGHT } from "@/lib/constants";
 import FiltersBar from "./_components/FiltersBar";
 import useFiltersState from "@/hooks/use-filters-state";
 import FiltersSidebar from "./_components/FiltersSidebar";
+import { useQuery } from "@tanstack/react-query";
+import { getAuthUser } from "@/lib/data/auth";
+import LoadingPage from "@/components/LoadingPage";
 
 export default function SearchPage() {
   const { isFiltersOpen } = useFiltersState();
+
+  const { data: authUser, isLoading } = useQuery({
+    queryKey: ["get-auth-user"],
+    queryFn: async () => {
+      const data = await getAuthUser();
+
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
 
   return (
     <div
@@ -33,7 +50,9 @@ export default function SearchPage() {
 
         <Map />
 
-        <div className="basis-4/12 overflow-y-auto">Listings</div>
+        <div className="basis-4/12 overflow-y-auto">
+          <Listings authUserId={authUser?.data?.userInfo.cognitoID} />
+        </div>
       </div>
     </div>
   );
