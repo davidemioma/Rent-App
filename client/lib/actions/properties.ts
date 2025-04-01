@@ -15,7 +15,7 @@ export const toggleFavorite = async ({
 
     return { message: res.data };
   } catch (err) {
-    console.log("createDbUser Err:", err);
+    console.log("toggleFavorite Err:", err);
 
     if (err instanceof AxiosError) {
       return { error: `${err.response?.data}` };

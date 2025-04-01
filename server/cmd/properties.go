@@ -30,6 +30,12 @@ func (app *application) getProperty(w http.ResponseWriter, r *http.Request) {
 	property, err := app.dbQuery.GetProperty(r.Context(), validId)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.RespondWithJSON(w, http.StatusOK, utils.JsonProperty{})
+
+			return
+		}
+
 		log.Printf("getProperty DB err: %v", err)
 		
 		utils.RespondWithError(w, http.StatusNotFound, "Unable to get property. Try again")

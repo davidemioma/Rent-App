@@ -26,7 +26,7 @@ const Card = ({
   handleToggleFavorite,
 }: Props) => {
   const [imgSrc, setImgSrc] = useState(
-    property.photoUrls?.[0] || "/placeholder.jpeg"
+    property.photoUrls?.[0] || "/placeholder.webp"
   );
 
   const { data } = useQuery({

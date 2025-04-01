@@ -52,3 +52,10 @@ export type FilteredProperty = {
   updatedAt: string;
   location: Location;
 };
+
+export type FavoriteProperty = {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  property: FilteredProperty;
+};

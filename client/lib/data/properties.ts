@@ -1,7 +1,7 @@
 import axiosInstance from "../axios";
 import { cleanParams } from "../utils";
-import { FilteredProperty } from "@/types";
 import { FiltersState } from "@/hooks/use-filters-state";
+import { FavoriteProperty, FilteredProperty } from "@/types";
 
 export const getFilteredProperties = async ({
   filters,
@@ -60,5 +60,37 @@ export const checkFavorite = async ({
     console.log("checkFavorite err: ", err);
 
     return { isFavorite: false };
+  }
+};
+
+export const getProperty = async (propertyId: string) => {
+  try {
+    const res = await axiosInstance.get(`/properties/${propertyId}`);
+
+    if (res.status !== 200) {
+      return null;
+    }
+
+    return res.data as FilteredProperty;
+  } catch (err) {
+    console.log("getProperty err: ", err);
+
+    return null;
+  }
+};
+
+export const getFavoriteProperties = async (cognitoId: string) => {
+  try {
+    const res = await axiosInstance.get(`/tenants/${cognitoId}/favorites`);
+
+    if (res.status !== 200) {
+      return [];
+    }
+
+    return res.data as FavoriteProperty[];
+  } catch (err) {
+    console.log("getFavoriteProperties err: ", err);
+
+    return [];
   }
 };
