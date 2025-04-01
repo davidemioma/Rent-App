@@ -38,3 +38,27 @@ export const getFilteredProperties = async ({
     return [];
   }
 };
+
+export const checkFavorite = async ({
+  propertyId,
+  cognitoId,
+}: {
+  propertyId: string;
+  cognitoId: string;
+}) => {
+  try {
+    const res = await axiosInstance.get(
+      `/${cognitoId}/check-favorite/${propertyId}`
+    );
+
+    if (res.status !== 200) {
+      return { isFavorite: false };
+    }
+
+    return { isFavorite: res.data.isFavorite };
+  } catch (err) {
+    console.log("checkFavorite err: ", err);
+
+    return { isFavorite: false };
+  }
+};

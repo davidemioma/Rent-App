@@ -33,7 +33,7 @@ const Listings = ({ authUserId }: Props) => {
     },
   });
 
-  const {} = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationKey: ["toggle-favorite"],
     mutationFn: async ({
       cognitoId,
@@ -44,9 +44,9 @@ const Listings = ({ authUserId }: Props) => {
     }) => {
       const res = await toggleFavorite({ cognitoId, propertyId });
 
-      return res;
+      return { res, propertyId };
     },
-    onSuccess: (res) => {
+    onSuccess: ({ res, propertyId }) => {
       if (res.error) {
         toast.error(res.error);
       }
@@ -56,11 +56,21 @@ const Listings = ({ authUserId }: Props) => {
       queryClient.invalidateQueries({
         queryKey: ["get-filtered-properties"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["is-Favorite", propertyId, authUserId],
+      });
     },
     onError: (err) => {
       toast.error(err.message || "Something went wrong");
     },
   });
+
+  const handleToggleFavorite = (propertyId: string) => {
+    if (!authUserId) return;
+
+    mutate({ cognitoId: authUserId as string, propertyId });
+  };
 
   if (isLoading) {
     return (
@@ -102,12 +112,20 @@ const Listings = ({ authUserId }: Props) => {
               key={property.id}
               property={property}
               showFavoriteBtn={!!authUserId}
+              cognitoId={authUserId}
+              propertyLink={`/search/${property.id}`}
+              isPending={isPending}
+              handleToggleFavorite={handleToggleFavorite}
             />
           ) : (
             <CardCompact
               key={property.id}
               property={property}
               showFavoriteBtn={!!authUserId}
+              cognitoId={authUserId}
+              propertyLink={`/search/${property.id}`}
+              isPending={isPending}
+              handleToggleFavorite={handleToggleFavorite}
             />
           )
         )}

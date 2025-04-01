@@ -59,6 +59,58 @@ func (app *application) getFavoriteProperties(w http.ResponseWriter, r *http.Req
 	utils.RespondWithJSON(w, http.StatusOK, properties)
 }
 
+func (app *application) checkFavorite(w http.ResponseWriter, r *http.Request, user utils.User) {
+	type ReturnType struct {
+		IsFavorite bool `json:"isFavorite"`
+	}
+
+	propertyId := chi.URLParam(r, "propertyId")
+
+	if propertyId == "" {
+		utils.RespondWithError(w, http.StatusBadRequest, "Property ID is required")
+
+		return
+	}
+
+	// Validate property ID
+	validPropertyId, err := uuid.Parse(propertyId)
+
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid property ID")
+
+		return
+	}
+
+	// Check if user is a tenant
+	tenant, err := app.dbQuery.GetTenantByCognitoId(r.Context(), user.CognitoID)
+
+	if err != nil {
+		log.Printf("checkFavorite (GetTenantByCognitoId) DB err: %v", err)
+
+		utils.RespondWithError(w, http.StatusNotFound, "Account not found!")
+      
+        return
+	}
+
+	// Check if favorite exists
+	favorite, err := app.dbQuery.GetFavourite(r.Context(), database.GetFavouriteParams{
+		PropertyID: validPropertyId,
+		TenantID: tenant.ID,
+	})
+
+	if (err == nil && favorite.ID != uuid.Nil) {
+		utils.RespondWithJSON(w, http.StatusOK, ReturnType{
+			IsFavorite: true,
+		})
+
+		return
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, ReturnType{
+		IsFavorite: false,
+	})
+}
+
 func (app *application) toggleFavorite(w http.ResponseWriter, r *http.Request, user utils.User) {
 	propertyId := chi.URLParam(r, "propertyId")
 

@@ -61,6 +61,8 @@ func (app *application) mount() http.Handler {
 			r.Get("/{cognitoId}/favorites", app.middlewareAuth([]string{"tenant"}, app.getFavoriteProperties))
 
 			r.Patch("/{cognitoId}/favorites/{propertyId}", app.middlewareAuth([]string{"tenant"}, app.toggleFavorite))
+
+			r.Get("/{cognitoId}/check-favorite/{propertyId}", app.middlewareAuth([]string{"tenant"}, app.checkFavorite))
 		})
 
 		r.Route("/managers", func(r chi.Router) {
