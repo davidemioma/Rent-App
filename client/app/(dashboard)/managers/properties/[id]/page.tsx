@@ -160,7 +160,7 @@ export default function PropertysPage() {
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Image
-                          src="/landing-i1.png"
+                          src="/placeholder.webp"
                           alt={lease.tenant.name}
                           width={40}
                           height={40}
