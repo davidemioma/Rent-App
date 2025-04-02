@@ -3,6 +3,7 @@ package utils
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"mime/multipart"
 	"server/internal/database"
 	"time"
@@ -238,44 +239,38 @@ type JsonLease struct {
 	Property   JsonProperty `json:"property"`
 }
 
-func DBLeaseToJson(leases []database.GetPropertyLeasesRow) []JsonLease {
-	var jsonLeases []JsonLease
-
-	for _, lease := range leases{
-		jsonLeases = append(jsonLeases, JsonLease{
-			ID: lease.ID,
-			PropertyID: lease.PropertyID,
-			TenantID: lease.TenantID,
-			Rent: lease.Rent,
-			Deposit: lease.Deposit,
-			StartDate: lease.StartDate,
-			EndDate: lease.EndDate,
-			Property: JsonProperty{
-				ID: lease.ID_2,
-				Name: lease.Name,
-				Description:       lease.Description,
-				PricePerMonth:     lease.PricePerMonth,
-				SecurityDeposit:   lease.SecurityDeposit,
-				ApplicationFee:    lease.ApplicationFee,
-				PhotoUrls:         lease.PhotoUrls,
-				IsPetsAllowed:     lease.IsPetsAllowed,
-				IsParkingIncluded: lease.IsParkingIncluded,
-				Beds:              lease.Beds,
-				Baths:             lease.Baths,
-				SquareFeet:        lease.SquareFeet,
-				PropertyType:      string(lease.PropertyType),
-				AverageRating:     lease.AverageRating,
-				NumberOfReviews:   lease.NumberOfReviews,
-				LocationID:        lease.LocationID,
-				ManagerID:         lease.ManagerID,
-				TenantID:          lease.TenantID_2,
-				CreatedAt:         lease.CreatedAt,
-				UpdatedAt:         lease.UpdatedAt,
-			},
-		})
+func DBLeaseToJson(lease database.GetPropertyLeaseRow) JsonLease {
+	return JsonLease{
+		ID: lease.ID,
+		PropertyID: lease.PropertyID,
+		TenantID: lease.TenantID,
+		Rent: lease.Rent,
+		Deposit: lease.Deposit,
+		StartDate: lease.StartDate,
+		EndDate: lease.EndDate,
+		Property: JsonProperty{
+			ID: lease.ID_2,
+			Name: lease.Name,
+			Description:       lease.Description,
+			PricePerMonth:     lease.PricePerMonth,
+			SecurityDeposit:   lease.SecurityDeposit,
+			ApplicationFee:    lease.ApplicationFee,
+			PhotoUrls:         lease.PhotoUrls,
+			IsPetsAllowed:     lease.IsPetsAllowed,
+			IsParkingIncluded: lease.IsParkingIncluded,
+			Beds:              lease.Beds,
+			Baths:             lease.Baths,
+			SquareFeet:        lease.SquareFeet,
+			PropertyType:      string(lease.PropertyType),
+			AverageRating:     lease.AverageRating,
+			NumberOfReviews:   lease.NumberOfReviews,
+			LocationID:        lease.LocationID,
+			ManagerID:         lease.ManagerID,
+			TenantID:          lease.TenantID_2,
+			CreatedAt:         lease.CreatedAt,
+			UpdatedAt:         lease.UpdatedAt,
+		},
 	}
-
-	return jsonLeases
 }
 
 type JsonPayment struct {
@@ -406,6 +401,60 @@ func DBApplicationsToJson(applications []database.GetUserApplicationsRow) []Json
 	}
 
 	return jsonApplications
+}
+
+type ManageLease struct {
+	ID              uuid.UUID    `json:"id"`  
+	PropertyID      uuid.UUID    `json:"propertyId"` 
+	TenantID        uuid.UUID    `json:"tenantId"` 
+	Rent            string       `json:"rent"` 
+	Deposit         string       `json:"deposit"` 
+	StartDate       time.Time    `json:"startDate"` 
+	EndDate         time.Time    `json:"endDate"` 
+	Tenant          JsonTenant   `json:"tenant"`
+	Payments       []JsonPayment `json:"payments"`
+}	
+
+func DBMangerLeasesToJson(leases []database.GetManagerLeasesRow) []ManageLease {
+	var jsonLeases []ManageLease
+
+	for _, lease := range leases{
+		paymentsJSON, ok := lease.Payments.([]byte)
+
+        if !ok {
+            log.Printf("Payments is not []byte, got: %T", lease.Payments)
+            continue
+        }
+
+        // Step 2: Unmarshal JSON into []JsonPayment
+        var payments []JsonPayment
+
+        if err := json.Unmarshal(paymentsJSON, &payments); err != nil {
+            log.Printf("Failed to unmarshal payments: %v", err)
+			
+            continue
+        }
+
+		jsonLeases = append(jsonLeases, ManageLease{
+			ID: lease.ID,
+			PropertyID: lease.PropertyID,
+			TenantID: lease.TenantID,
+			Rent: lease.Rent,
+			Deposit: lease.Deposit,
+			StartDate: lease.StartDate,
+			EndDate: lease.EndDate,
+			Tenant: JsonTenant{
+				ID: lease.ID_2,
+				CognitoID: lease.CognitoID,
+				Name: lease.Name,
+				Email: lease.Email,
+				Phonenumber: lease.Phonenumber,
+			},
+			Payments: payments,
+		})
+	}
+
+	return jsonLeases
 }
 
 type ApplictionLease struct {

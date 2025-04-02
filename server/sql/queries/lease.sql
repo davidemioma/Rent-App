@@ -1,7 +1,8 @@
--- name: GetPropertyLeases :many
+-- name: GetPropertyLease :one
 SELECT l.*, p.*
 FROM lease l
-JOIN property p ON l.property_id = p.id;
+JOIN property p ON l.property_id = p.id
+WHERE l.property_id = $1 AND l.tenant_id = $2;
 
 -- name: GetLeasePayments :many
 SELECT *
@@ -19,3 +20,14 @@ VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: GetLease :one
 SELECT * FROM lease WHERE id = $1;
+
+-- name: GetManagerLeases :many
+SELECT 
+    l.*, 
+    t.*, 
+    ARRAY_AGG(p.*) AS payments
+FROM lease l
+JOIN tenant t ON l.tenant_id = t.id
+JOIN payment p ON p.lease_id = l.id
+WHERE l.property_id = $1
+GROUP BY l.id, t.id;

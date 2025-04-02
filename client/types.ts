@@ -59,3 +59,36 @@ export type FavoriteProperty = {
   tenantId: string;
   property: FilteredProperty;
 };
+
+export type LeaseType = {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  rent: string;
+  deposit: string;
+  startDate: Date;
+  endDate: Date;
+  property: FilteredProperty;
+};
+
+export type PaymentType = {
+  id: string;
+  leaseId: string;
+  amountDue: string;
+  amountPaid: string;
+  dueDate: Date;
+  paymentDate: Date;
+  paymentStatus: string;
+};
+
+export type ManagerLeaseType = {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  rent: string;
+  deposit: string;
+  startDate: Date;
+  endDate: Date;
+  tenant: Tenant;
+  payments: PaymentType[];
+};

@@ -1,7 +1,13 @@
 import axiosInstance from "../axios";
 import { cleanParams } from "../utils";
 import { FiltersState } from "@/hooks/use-filters-state";
-import { FavoriteProperty, FilteredProperty } from "@/types";
+import {
+  FavoriteProperty,
+  FilteredProperty,
+  LeaseType,
+  ManagerLeaseType,
+  PaymentType,
+} from "@/types";
 
 export const getFilteredProperties = async ({
   filters,
@@ -48,7 +54,7 @@ export const checkFavorite = async ({
 }) => {
   try {
     const res = await axiosInstance.get(
-      `/${cognitoId}/check-favorite/${propertyId}`
+      `/tenants/${cognitoId}/check-favorite/${propertyId}`
     );
 
     if (res.status !== 200) {
@@ -92,5 +98,181 @@ export const getFavoriteProperties = async (cognitoId: string) => {
     console.log("getFavoriteProperties err: ", err);
 
     return [];
+  }
+};
+
+export const getCurrentResidences = async (cognitoId: string) => {
+  try {
+    const res = await axiosInstance.get(`/tenants/${cognitoId}/residences`);
+
+    if (res.status !== 200) {
+      return [];
+    }
+
+    return res.data as FilteredProperty[];
+  } catch (err) {
+    console.log("getCurrentResidences err: ", err);
+
+    return [];
+  }
+};
+
+type ReturnType = {
+  property: FilteredProperty | null;
+  lease: LeaseType | null;
+  payments: PaymentType[];
+};
+
+export const getLease = async (propertyId: string) => {
+  try {
+    const res = await axiosInstance.get(`/leases/${propertyId}`);
+
+    if (res.status !== 200) {
+      return null;
+    }
+
+    return res.data as LeaseType;
+  } catch (err) {
+    console.log("getLease err: ", err);
+
+    return null;
+  }
+};
+
+export const getPayments = async (leaseId: string) => {
+  try {
+    const res = await axiosInstance.get(`/leases/${leaseId}/payments`);
+
+    if (res.status !== 200) {
+      return [];
+    }
+
+    return res.data as PaymentType[];
+  } catch (err) {
+    console.log("getLease err: ", err);
+
+    return [];
+  }
+};
+
+export const getResidenceDetails = async ({
+  propertyId,
+}: {
+  propertyId: string;
+}): Promise<ReturnType> => {
+  try {
+    const property = await getProperty(propertyId);
+
+    if (!property) {
+      return {
+        property: null,
+        lease: null,
+        payments: [],
+      };
+    }
+
+    const lease = await getLease(propertyId);
+
+    if (!lease) {
+      return {
+        property,
+        lease: null,
+        payments: [],
+      };
+    }
+
+    const payments = await getPayments(lease?.id);
+
+    return {
+      property,
+      lease,
+      payments,
+    };
+  } catch (err) {
+    console.log("getResidenceDetails err: ", err);
+
+    return {
+      property: null,
+      lease: null,
+      payments: [],
+    };
+  }
+};
+
+export const getManagerProperties = async (cognitoId: string) => {
+  try {
+    const res = await axiosInstance.get(`/managers/${cognitoId}/properties`);
+
+    if (res.status !== 200) {
+      return [];
+    }
+
+    return res.data as FilteredProperty[];
+  } catch (err) {
+    console.log("getLease err: ", err);
+
+    return [];
+  }
+};
+
+type ManageReturnType = {
+  property: FilteredProperty | null;
+  leases: ManagerLeaseType[];
+};
+
+export const getLeases = async ({
+  propertyId,
+  cognitoId,
+}: {
+  propertyId: string;
+  cognitoId: string;
+}) => {
+  try {
+    const res = await axiosInstance.get(
+      `/managers/${cognitoId}/properties/${propertyId}/leases`
+    );
+
+    if (res.status !== 200) {
+      return [];
+    }
+
+    return res.data as ManagerLeaseType[];
+  } catch (err) {
+    console.log("getLease err: ", err);
+
+    return [];
+  }
+};
+
+export const getPropertyDetails = async ({
+  propertyId,
+  cognitoId,
+}: {
+  propertyId: string;
+  cognitoId: string;
+}): Promise<ManageReturnType> => {
+  try {
+    const property = await getProperty(propertyId);
+
+    if (!property) {
+      return {
+        property: null,
+        leases: [],
+      };
+    }
+
+    const leases = await getLeases({ propertyId, cognitoId });
+
+    return {
+      property,
+      leases,
+    };
+  } catch (err) {
+    console.log("getResidenceDetails err: ", err);
+
+    return {
+      property: null,
+      leases: [],
+    };
   }
 };

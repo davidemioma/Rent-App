@@ -137,13 +137,84 @@ func (q *Queries) GetLeasePayments(ctx context.Context, leaseID uuid.UUID) ([]Pa
 	return items, nil
 }
 
-const getPropertyLeases = `-- name: GetPropertyLeases :many
+const getManagerLeases = `-- name: GetManagerLeases :many
+SELECT 
+    l.id, l.property_id, l.tenant_id, l.rent, l.deposit, l.start_date, l.end_date, 
+    t.id, t.cognito_id, t.name, t.email, t.phonenumber, 
+    ARRAY_AGG(p.*) AS payments
+FROM lease l
+JOIN tenant t ON l.tenant_id = t.id
+JOIN payment p ON p.lease_id = l.id
+WHERE l.property_id = $1
+GROUP BY l.id, t.id
+`
+
+type GetManagerLeasesRow struct {
+	ID          uuid.UUID
+	PropertyID  uuid.UUID
+	TenantID    uuid.UUID
+	Rent        string
+	Deposit     string
+	StartDate   time.Time
+	EndDate     time.Time
+	ID_2        uuid.UUID
+	CognitoID   string
+	Name        string
+	Email       string
+	Phonenumber string
+	Payments    interface{}
+}
+
+func (q *Queries) GetManagerLeases(ctx context.Context, propertyID uuid.UUID) ([]GetManagerLeasesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getManagerLeases, propertyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetManagerLeasesRow
+	for rows.Next() {
+		var i GetManagerLeasesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PropertyID,
+			&i.TenantID,
+			&i.Rent,
+			&i.Deposit,
+			&i.StartDate,
+			&i.EndDate,
+			&i.ID_2,
+			&i.CognitoID,
+			&i.Name,
+			&i.Email,
+			&i.Phonenumber,
+			&i.Payments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPropertyLease = `-- name: GetPropertyLease :one
 SELECT l.id, l.property_id, l.tenant_id, l.rent, l.deposit, l.start_date, l.end_date, p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at
 FROM lease l
 JOIN property p ON l.property_id = p.id
+WHERE l.property_id = $1 AND l.tenant_id = $2
 `
 
-type GetPropertyLeasesRow struct {
+type GetPropertyLeaseParams struct {
+	PropertyID uuid.UUID
+	TenantID   uuid.UUID
+}
+
+type GetPropertyLeaseRow struct {
 	ID                uuid.UUID
 	PropertyID        uuid.UUID
 	TenantID          uuid.UUID
@@ -173,53 +244,37 @@ type GetPropertyLeasesRow struct {
 	UpdatedAt         time.Time
 }
 
-func (q *Queries) GetPropertyLeases(ctx context.Context) ([]GetPropertyLeasesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPropertyLeases)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetPropertyLeasesRow
-	for rows.Next() {
-		var i GetPropertyLeasesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.PropertyID,
-			&i.TenantID,
-			&i.Rent,
-			&i.Deposit,
-			&i.StartDate,
-			&i.EndDate,
-			&i.ID_2,
-			&i.Name,
-			&i.Description,
-			&i.PricePerMonth,
-			&i.SecurityDeposit,
-			&i.ApplicationFee,
-			pq.Array(&i.PhotoUrls),
-			&i.IsPetsAllowed,
-			&i.IsParkingIncluded,
-			&i.Beds,
-			&i.Baths,
-			&i.SquareFeet,
-			&i.PropertyType,
-			&i.AverageRating,
-			&i.NumberOfReviews,
-			&i.LocationID,
-			&i.ManagerID,
-			&i.TenantID_2,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetPropertyLease(ctx context.Context, arg GetPropertyLeaseParams) (GetPropertyLeaseRow, error) {
+	row := q.db.QueryRowContext(ctx, getPropertyLease, arg.PropertyID, arg.TenantID)
+	var i GetPropertyLeaseRow
+	err := row.Scan(
+		&i.ID,
+		&i.PropertyID,
+		&i.TenantID,
+		&i.Rent,
+		&i.Deposit,
+		&i.StartDate,
+		&i.EndDate,
+		&i.ID_2,
+		&i.Name,
+		&i.Description,
+		&i.PricePerMonth,
+		&i.SecurityDeposit,
+		&i.ApplicationFee,
+		pq.Array(&i.PhotoUrls),
+		&i.IsPetsAllowed,
+		&i.IsParkingIncluded,
+		&i.Beds,
+		&i.Baths,
+		&i.SquareFeet,
+		&i.PropertyType,
+		&i.AverageRating,
+		&i.NumberOfReviews,
+		&i.LocationID,
+		&i.ManagerID,
+		&i.TenantID_2,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
