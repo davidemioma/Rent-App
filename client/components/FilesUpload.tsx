@@ -138,7 +138,7 @@ const FilesUpload = ({ values, setValues, disabled }: Props) => {
   }, [values]);
 
   return (
-    <div className="bg-black">
+    <div className="w-full space-y-4">
       <input
         type="file"
         ref={inputRef}
@@ -148,6 +148,41 @@ const FilesUpload = ({ values, setValues, disabled }: Props) => {
         onChange={handleFileChange}
         disabled={disabled || values.length >= MAX_FILES}
       />
+
+      {values.length < MAX_FILES && !disabled && (
+        <button
+          type="button"
+          onClick={triggerInput}
+          disabled={disabled}
+          className="relative h-40 w-full border-2 border-dashed border-muted-foreground/50 rounded-md flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <UploadCloud className="size-8 mb-1" />
+
+          <span>Upload Image</span>
+
+          <span className="text-xs">
+            ({values.length}/{MAX_FILES})
+          </span>
+        </button>
+      )}
+
+      {values.length > 0 && !disabled && (
+        <Button
+          type="button"
+          className="w-fit mt-2"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setValues([]);
+
+            if (inputRef.current) {
+              inputRef.current.value = "";
+            }
+          }}
+        >
+          Clear All ({values.length})
+        </Button>
+      )}
 
       <div
         className={cn(
@@ -176,21 +211,6 @@ const FilesUpload = ({ values, setValues, disabled }: Props) => {
               >
                 <X className="size-3" />
               </Button>
-            )}
-
-            {values.length < MAX_FILES && !disabled && (
-              <button
-                type="button"
-                onClick={triggerInput}
-                disabled={disabled}
-                className="relative aspect-square w-full border-2 border-dashed border-muted-foreground/50 rounded-md flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <UploadCloud className="size-8 mb-1" />
-                <span>Upload Image</span>
-                <span className="text-xs">
-                  ({values.length}/{MAX_FILES})
-                </span>
-              </button>
             )}
           </div>
         ))}

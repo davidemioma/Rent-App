@@ -138,13 +138,10 @@ export default function PropertiesPage() {
 
                       <FormControl>
                         <FilesUpload
-                          values={field.value || []}
-                          setValues={(values) =>
-                            form.setValue("photo_urls", values)
-                          }
+                          values={field.value}
+                          setValues={field.onChange}
                         />
                       </FormControl>
-
                       <FormMessage />
                     </FormItem>
                   )}
