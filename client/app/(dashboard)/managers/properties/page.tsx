@@ -30,7 +30,7 @@ export default function PropertiesPage() {
     queryKey: ["get-manager-properties", authUser?.data?.userInfo.cognitoID],
     queryFn: async () => {
       const data = await getManagerProperties(
-        authUser?.data?.userInfo.cognitoID || ""
+        authUser?.data?.userInfo.cognitoID as string
       );
 
       return data;
@@ -49,7 +49,7 @@ export default function PropertiesPage() {
     redirect("/");
   }
 
-  if (!isError || !properties) {
+  if (isError || (properties && properties.length === 0)) {
     return (
       <div className="w-full h-full flex items-center justify-center text-center text-muted-foreground">
         {isError

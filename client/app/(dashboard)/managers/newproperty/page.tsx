@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { redirect } from "next/navigation";
 import Headings from "@/components/Headings";
@@ -7,12 +8,13 @@ import { getAuthUser } from "@/lib/data/auth";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import FilesUpload from "@/components/FilesUpload";
 import { PropertyTypeEnum } from "@/lib/constants";
 import LoadingPage from "@/components/LoadingPage";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createProperty } from "@/lib/actions/properties";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { PropertySchema, PropertyValidator } from "@/lib/validators/property";
 import {
   Select,
@@ -67,8 +69,51 @@ export default function PropertiesPage() {
     },
   });
 
+  const { mutate, isPending } = useMutation({
+    mutationKey: ["create-property"],
+    mutationFn: async (values: PropertyValidator) => {
+      const formData = new FormData();
+
+      Object.entries(values).forEach(([key, value]) => {
+        if (key === "photo_urls") {
+          const files = value as File[];
+
+          files.forEach((file: File) => {
+            if (file !== null || file !== undefined) {
+              formData.append("images", file);
+            }
+          });
+        } else if (key === "property_type") {
+          formData.append("property_type", String(value).toUpperCase());
+        } else if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+
+      const result = await createProperty(formData);
+
+      return result;
+    },
+    onSuccess: (res) => {
+      if (res.error) {
+        toast.error("Something went wrong! unable to create property.");
+
+        return;
+      }
+
+      toast.success("New property created");
+
+      form.reset();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
   const onSubmit = (values: PropertyValidator) => {
-    console.log(values);
+    mutate(values);
   };
 
   if (isLoading) {
@@ -105,7 +150,11 @@ export default function PropertiesPage() {
                       <FormLabel>Property Name</FormLabel>
 
                       <FormControl>
-                        <Input placeholder="name..." {...field} />
+                        <Input
+                          placeholder="name..."
+                          disabled={isPending}
+                          {...field}
+                        />
                       </FormControl>
 
                       <FormMessage />
@@ -121,7 +170,11 @@ export default function PropertiesPage() {
                       <FormLabel>Description</FormLabel>
 
                       <FormControl>
-                        <Textarea placeholder="Write something..." {...field} />
+                        <Textarea
+                          placeholder="Write something..."
+                          disabled={isPending}
+                          {...field}
+                        />
                       </FormControl>
 
                       <FormMessage />
@@ -140,6 +193,7 @@ export default function PropertiesPage() {
                         <FilesUpload
                           values={field.value}
                           setValues={field.onChange}
+                          disabled={isPending}
                         />
                       </FormControl>
                       <FormMessage />
@@ -163,7 +217,7 @@ export default function PropertiesPage() {
                       <FormLabel>Price Per Month</FormLabel>
 
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" disabled={isPending} {...field} />
                       </FormControl>
 
                       <FormMessage />
@@ -180,7 +234,11 @@ export default function PropertiesPage() {
                         <FormLabel>Security Deposit</FormLabel>
 
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            disabled={isPending}
+                            {...field}
+                          />
                         </FormControl>
 
                         <FormMessage />
@@ -196,7 +254,11 @@ export default function PropertiesPage() {
                         <FormLabel>Application Fee</FormLabel>
 
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            disabled={isPending}
+                            {...field}
+                          />
                         </FormControl>
 
                         <FormMessage />
@@ -220,7 +282,11 @@ export default function PropertiesPage() {
                         <FormLabel>Beds</FormLabel>
 
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            disabled={isPending}
+                            {...field}
+                          />
                         </FormControl>
 
                         <FormMessage />
@@ -236,7 +302,11 @@ export default function PropertiesPage() {
                         <FormLabel>Baths</FormLabel>
 
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            disabled={isPending}
+                            {...field}
+                          />
                         </FormControl>
 
                         <FormMessage />
@@ -252,7 +322,11 @@ export default function PropertiesPage() {
                         <FormLabel>Square Feet</FormLabel>
 
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            disabled={isPending}
+                            {...field}
+                          />
                         </FormControl>
 
                         <FormMessage />
@@ -268,13 +342,14 @@ export default function PropertiesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
-                          <FormLabel>Marketing emails</FormLabel>
+                          <FormLabel>Is pets allowed</FormLabel>
                         </div>
 
                         <FormControl>
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
+                            disabled={isPending}
                           />
                         </FormControl>
                       </FormItem>
@@ -287,13 +362,14 @@ export default function PropertiesPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
-                          <FormLabel>Marketing emails</FormLabel>
+                          <FormLabel>Is Parking allowed</FormLabel>
                         </div>
 
                         <FormControl>
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
+                            disabled={isPending}
                           />
                         </FormControl>
                       </FormItem>
@@ -312,14 +388,18 @@ export default function PropertiesPage() {
                           defaultValue={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger disabled={isPending}>
                               <SelectValue placeholder="Select a property type" />
                             </SelectTrigger>
                           </FormControl>
 
                           <SelectContent>
                             {Object.keys(PropertyTypeEnum).map((type) => (
-                              <SelectItem key={type} value={type}>
+                              <SelectItem
+                                key={type}
+                                value={type}
+                                disabled={isPending}
+                              >
                                 {type}
                               </SelectItem>
                             ))}
@@ -352,6 +432,7 @@ export default function PropertiesPage() {
                           <Input
                             type="text"
                             placeholder="address..."
+                            disabled={isPending}
                             {...field}
                           />
                         </FormControl>
@@ -373,6 +454,7 @@ export default function PropertiesPage() {
                             <Input
                               type="text"
                               placeholder="city..."
+                              disabled={isPending}
                               {...field}
                             />
                           </FormControl>
@@ -393,6 +475,7 @@ export default function PropertiesPage() {
                             <Input
                               type="text"
                               placeholder="state..."
+                              disabled={isPending}
                               {...field}
                             />
                           </FormControl>
@@ -413,6 +496,7 @@ export default function PropertiesPage() {
                             <Input
                               type="text"
                               placeholder="123456..."
+                              disabled={isPending}
                               {...field}
                             />
                           </FormControl>
@@ -434,6 +518,7 @@ export default function PropertiesPage() {
                           <Input
                             type="text"
                             placeholder="United Kingdom..."
+                            disabled={isPending}
                             {...field}
                           />
                         </FormControl>
@@ -449,8 +534,9 @@ export default function PropertiesPage() {
             <Button
               className="bg-[#27272a] text-white text-sm w-full"
               type="submit"
+              disabled={isPending}
             >
-              Create Property
+              {isPending ? "Creating..." : "Create Property"}
             </Button>
           </form>
         </Form>

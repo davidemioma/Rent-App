@@ -207,9 +207,11 @@ export const getManagerProperties = async (cognitoId: string) => {
       return [];
     }
 
+    console.log("Manager Properties: ", res.data);
+
     return res.data as FilteredProperty[];
   } catch (err) {
-    console.log("getLease err: ", err);
+    console.log("getManagerProperties err: ", err);
 
     return [];
   }

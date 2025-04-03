@@ -329,8 +329,8 @@ func (q *Queries) GetFilteredProperties(ctx context.Context, arg GetFilteredProp
 
 const getLocationCoordinates = `-- name: GetLocationCoordinates :one
 SELECT 
-    ST_X(coordinates) AS longitude,  -- float64
-    ST_Y(coordinates) AS latitude    -- float64
+    ST_X(coordinates::geometry) AS longitude,
+    ST_Y(coordinates::geometry) AS latitude
 FROM location 
 WHERE id = $1
 `
@@ -350,7 +350,7 @@ func (q *Queries) GetLocationCoordinates(ctx context.Context, id uuid.UUID) (Get
 const getManagerProperties = `-- name: GetManagerProperties :many
 SELECT p.id, p.name, p.description, p.price_per_month, p.security_deposit, p.application_fee, p.photo_urls, p.is_pets_allowed, p.is_parking_included, p.beds, p.baths, p.square_feet, p.property_type, p.average_rating, p.number_of_reviews, p.location_id, p.manager_id, p.tenant_id, p.created_at, p.updated_at, l.id, l.address, l.city, l.state, l.country, l.postal_code, l.coordinates
 FROM property p
-LEFT JOIN location l ON p.location_id = l.id
+JOIN location l ON p.location_id = l.id
 WHERE p.manager_id = $1
 `
 
@@ -375,12 +375,12 @@ type GetManagerPropertiesRow struct {
 	TenantID          uuid.NullUUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
-	ID_2              uuid.NullUUID
-	Address           sql.NullString
-	City              sql.NullString
-	State             sql.NullString
-	Country           sql.NullString
-	PostalCode        sql.NullString
+	ID_2              uuid.UUID
+	Address           string
+	City              string
+	State             string
+	Country           string
+	PostalCode        string
 	Coordinates       interface{}
 }
 

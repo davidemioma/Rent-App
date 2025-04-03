@@ -6,8 +6,8 @@ WHERE p.id = $1;
 
 -- name: GetLocationCoordinates :one
 SELECT 
-    ST_X(coordinates) AS longitude,  -- float64
-    ST_Y(coordinates) AS latitude    -- float64
+    ST_X(coordinates::geometry) AS longitude,
+    ST_Y(coordinates::geometry) AS latitude
 FROM location 
 WHERE id = $1;
 
@@ -132,7 +132,7 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $
 -- name: GetManagerProperties :many
 SELECT p.*, l.*
 FROM property p
-LEFT JOIN location l ON p.location_id = l.id
+JOIN location l ON p.location_id = l.id
 WHERE p.manager_id = $1;
 
 -- name: GetTenantProperties :many

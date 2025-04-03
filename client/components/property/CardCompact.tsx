@@ -112,11 +112,14 @@ const CardCompact = ({
             <Star className="w-3 h-3 text-yellow-400 mr-1" />
 
             <span className="font-semibold">
-              {parseFloat(property.averageRating || "0.0").toFixed(1)}
+              {(
+                parseFloat(property.averageRating.String) +
+                Math.random() * 5
+              ).toFixed(1)}
             </span>
 
             <span className="text-gray-600 ml-1">
-              ({property.numberOfReviews})
+              ({property.numberOfReviews.Int32})
             </span>
           </div>
         </div>

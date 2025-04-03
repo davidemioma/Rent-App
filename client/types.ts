@@ -29,6 +29,16 @@ export type Location = {
   coordinates: Coordinates;
 };
 
+type StringValid = {
+  String: string;
+  Valid: boolean;
+};
+
+type IntValid = {
+  Int32: string;
+  Valid: boolean;
+};
+
 export type FilteredProperty = {
   id: string;
   name: string;
@@ -43,8 +53,8 @@ export type FilteredProperty = {
   baths: string;
   squareFeet: number;
   propertyType: string;
-  averageRating: string | null;
-  numberOfReviews: number | null;
+  averageRating: StringValid;
+  numberOfReviews: IntValid;
   locationId: string;
   managerId: string;
   tenantId: string | null;

@@ -96,6 +96,17 @@ func (app *application) getProperties(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createProperty(w http.ResponseWriter, r *http.Request, user utils.User) {
+	// Check if user is a manager
+	manager, err := app.dbQuery.GetManagerByCognitoId(r.Context(), user.CognitoID)
+
+	if err != nil {
+		log.Printf("GetManagerByCognitoId DB err: %v", err)
+
+		utils.RespondWithError(w, http.StatusNotFound, "Account not found! Unathorized.")
+      
+        return
+	}
+
 	// Get the values and files from the form
 	data, err := utils.GetCreatePropertyFormValues(r)
 
@@ -106,6 +117,35 @@ func (app *application) createProperty(w http.ResponseWriter, r *http.Request, u
       
         return
 
+	}
+
+	// Upload images to AWS
+	var imageUrls []string
+
+	log.Println(data.PropertyData.UploadedFiles)
+
+	if (len(data.PropertyData.UploadedFiles) > 0) {
+		for _, uf := range data.PropertyData.UploadedFiles {
+			// Generate a unique key for the S3 object
+		    uniqueID := uuid.New().String()
+
+			key := "uploads/" + uniqueID + uf.Extension
+
+			// Upload to S3 and create a URL with cloudfront
+			s3Err := utils.UploadToS3(app.s3Bucket, key, uf.File)
+
+			if s3Err != nil {
+				log.Printf("Could not upload to s3 (UploadToS3): %v", s3Err)
+
+				utils.RespondWithError(w, http.StatusInternalServerError, "Could not upload to s3. Try Again")
+
+				return
+		    }
+
+			url := app.cloudfront_url + "/" + key + "#t=1"
+
+			imageUrls = append(imageUrls, url)
+		}
 	}
 
 	// Create Location
@@ -138,33 +178,6 @@ func (app *application) createProperty(w http.ResponseWriter, r *http.Request, u
         return
 	}
 
-	// Upload images to AWS
-	var imageUrls []string
-
-	if (len(data.PropertyData.UploadedFiles) > 0) {
-		for _, uf := range data.PropertyData.UploadedFiles {
-			// Generate a unique key for the S3 object
-		    uniqueID := uuid.New().String()
-
-			key := "uploads/" + uniqueID + uf.Extension
-
-			// Upload to S3 and create a URL with cloudfront
-			s3Err := utils.UploadToS3(app.s3Bucket, key, uf.File)
-
-			if s3Err != nil {
-				log.Printf("Could not upload to s3 (UploadToS3): %v", s3Err)
-
-				utils.RespondWithError(w, http.StatusInternalServerError, "Could not upload to s3. Try Again")
-
-				return
-		    }
-
-			url := app.cloudfront_url + "/" + key + "#t=1"
-
-			imageUrls = append(imageUrls, url)
-		}
-	}
-
 	// Create property
 	dbErr := app.dbQuery.CreateProperty(r.Context(), database.CreatePropertyParams{
 		ID: uuid.New(),
@@ -189,7 +202,7 @@ func (app *application) createProperty(w http.ResponseWriter, r *http.Request, u
 			Valid: data.PropertyData.NumberOfReviews > 0,
 		},
 		LocationID: location.ID,
-		ManagerID: uuid.MustParse(user.CognitoID),
+		ManagerID: manager.ID,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})
@@ -223,7 +236,7 @@ func (app *application) getManagerProperties(w http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			utils.RespondWithJSON(w, http.StatusOK, propertiesWithLocation)
+			utils.RespondWithJSON(w, http.StatusOK, []utils.JsonProperty{})
 
 			return
 		} else {
@@ -239,7 +252,7 @@ func (app *application) getManagerProperties(w http.ResponseWriter, r *http.Requ
 		coords, err := app.dbQuery.GetLocationCoordinates(r.Context(), property.LocationID)
 
 		if err != nil {
-			log.Printf("getProperty (GetLocationCoordinates) err: %v", err)
+			log.Printf("getManagerProperties (GetLocationCoordinates) err: %v", err)
 			
 			utils.RespondWithError(w, http.StatusNotFound, "Unable to get property coordinates. Try again")
 
@@ -250,7 +263,7 @@ func (app *application) getManagerProperties(w http.ResponseWriter, r *http.Requ
 
 		lat := coords.Latitude.(float64)
 
-		propertiesWithLocation = append(propertiesWithLocation, utils.DBpropertyToJson(database.GetPropertyRow(property), lat, lng))
+		propertiesWithLocation = append(propertiesWithLocation, utils.DBManagerPropertyToJson(property, lat, lng))
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, propertiesWithLocation)

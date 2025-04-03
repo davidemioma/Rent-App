@@ -472,3 +472,40 @@ type ApplicationReturnType struct {
 	Details JsonApplication  `json:"details"` 
 	Lease   ApplictionLease  `json:"lease"`
 }
+
+func DBManagerPropertyToJson(property database.GetManagerPropertiesRow, lat float64, lng float64) JsonProperty {
+	return JsonProperty{
+		ID: property.ID,
+		Name: property.Name,
+		Description:       property.Description,
+		PricePerMonth:     property.PricePerMonth,
+		SecurityDeposit:   property.SecurityDeposit,
+		ApplicationFee:    property.ApplicationFee,
+		PhotoUrls:         property.PhotoUrls,
+		IsPetsAllowed:     property.IsPetsAllowed,
+		IsParkingIncluded: property.IsParkingIncluded,
+		Beds:              property.Beds,
+		Baths:             property.Baths,
+		SquareFeet:        property.SquareFeet,
+		PropertyType:      string(property.PropertyType),
+		AverageRating:     property.AverageRating,
+		NumberOfReviews:   property.NumberOfReviews,
+		LocationID:        property.LocationID,
+		ManagerID:         property.ManagerID,
+		TenantID:          property.TenantID,
+		CreatedAt:         property.CreatedAt,
+		UpdatedAt:         property.UpdatedAt,
+		Location:          JsonLocation{
+			ID: property.LocationID,
+			Address: property.Address,
+			City: property.City,
+            State: property.State,
+			Country: property.Country,
+            PostalCode: property.PostalCode,
+			Coordinates: Coordinates{
+				Latitude: lat,
+				Longitude: lng,
+			},
+		},
+	}
+}

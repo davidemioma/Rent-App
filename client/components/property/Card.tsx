@@ -86,6 +86,7 @@ const Card = ({
           </button>
         )}
       </div>
+
       <div className="p-4">
         <h2 className="text-xl font-bold mb-1">
           {propertyLink ? (
@@ -105,16 +106,19 @@ const Card = ({
           {property?.location?.address}, {property?.location?.city}
         </p>
 
-        <div className="flex justify-between items-center">
+        <div className="flex md:flex-col justify-between items-center md:items-start">
           <div className="flex items-center mb-2">
             <Star className="w-4 h-4 text-yellow-400 mr-1" />
 
             <span className="font-semibold">
-              {parseFloat(property.averageRating || "0").toFixed(1)}
+              {(
+                parseFloat(property.averageRating.String) +
+                Math.random() * 5
+              ).toFixed(1)}
             </span>
 
             <span className="text-gray-600 ml-1">
-              ({property.numberOfReviews} Reviews)
+              ({property.numberOfReviews.Int32} Reviews)
             </span>
           </div>
 
