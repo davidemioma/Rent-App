@@ -44,3 +44,30 @@ export const toggleFavorite = async ({
     }
   }
 };
+
+export const updateApplicationStatus = async ({
+  applicationId,
+  status,
+}: {
+  applicationId: string;
+  status: string;
+}) => {
+  try {
+    const res = await axiosInstance.patch(
+      `/applications/${applicationId}/status`,
+      {
+        status,
+      }
+    );
+
+    return { message: res.data };
+  } catch (err) {
+    console.log("updateApplicationStatus Err:", err);
+
+    if (err instanceof AxiosError) {
+      return { error: `${err.response?.data}` };
+    } else {
+      return { error: "Something went wrong! unable to update status." };
+    }
+  }
+};

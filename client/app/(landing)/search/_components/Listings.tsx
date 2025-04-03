@@ -25,7 +25,7 @@ const Listings = ({ authUserId }: Props) => {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["get-filtered-properties"],
+    queryKey: ["get-filtered-properties", filters],
     queryFn: async () => {
       const data = await getFilteredProperties({ filters });
 

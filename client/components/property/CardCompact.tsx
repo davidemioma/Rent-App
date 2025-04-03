@@ -75,7 +75,7 @@ const CardCompact = ({
       <div className="w-2/3 p-4 flex flex-col justify-between">
         <div>
           <div className="flex justify-between items-start">
-            <h2 className="text-xl font-bold mb-1">
+            <h2 className="text-xl font-bold mb-1 cursor-pointer">
               {propertyLink ? (
                 <Link
                   href={propertyLink}

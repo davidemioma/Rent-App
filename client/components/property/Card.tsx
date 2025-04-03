@@ -88,7 +88,7 @@ const Card = ({
       </div>
 
       <div className="p-4">
-        <h2 className="text-xl font-bold mb-1">
+        <h2 className="text-xl font-bold mb-1 cursor-pointer">
           {propertyLink ? (
             <Link
               href={propertyLink}

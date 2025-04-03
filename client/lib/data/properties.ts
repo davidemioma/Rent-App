@@ -7,6 +7,7 @@ import {
   LeaseType,
   ManagerLeaseType,
   PaymentType,
+  PropertyApplication,
 } from "@/types";
 
 export const getFilteredProperties = async ({
@@ -25,7 +26,7 @@ export const getFilteredProperties = async ({
       baths: filters.baths,
       squareFeetMin: filters.squareFeet?.[0],
       squareFeetMax: filters.squareFeet?.[1],
-      propertyType: filters.propertyType,
+      propertyType: filters.propertyType?.toUpperCase(),
       amenities: filters.amenities?.join(","),
       availableFrom: filters.availableFrom,
       latitude: filters.coordinates?.[0],
@@ -270,11 +271,27 @@ export const getPropertyDetails = async ({
       leases,
     };
   } catch (err) {
-    console.log("getResidenceDetails err: ", err);
+    console.log("getPropertyDetails err: ", err);
 
     return {
       property: null,
       leases: [],
     };
+  }
+};
+
+export const getAllApplications = async () => {
+  try {
+    const res = await axiosInstance.get("/applications");
+
+    if (res.status !== 200) {
+      return [];
+    }
+
+    return res.data as PropertyApplication[];
+  } catch (err) {
+    console.log("getPropertyApplications err: ", err);
+
+    return [];
   }
 };
