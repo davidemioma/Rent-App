@@ -51,7 +51,7 @@ WHERE
   AND (sqlc.narg(square_feet_max)::int IS NULL OR p.square_feet <= sqlc.narg(square_feet_max)::int)
 
   -- Property Type: Ignore if NULL or 'any', otherwise compare
-  AND (NULLIF(sqlc.narg(property_type)::text, 'any') IS NULL OR p.property_type = CAST(NULLIF(sqlc.narg(property_type)::text, 'any') AS property_type))
+  AND (NULLIF(sqlc.narg(property_type)::text, 'ANY') IS NULL OR p.property_type = CAST(NULLIF(sqlc.narg(property_type)::text, 'any') AS property_type))
 
   -- Available From: Ignore if NULL or 'any', otherwise check lease existence
   AND (NULLIF(sqlc.narg(available_from)::text, 'any') IS NULL OR EXISTS (

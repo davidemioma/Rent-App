@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"server/cmd/utils"
 	"server/internal/database"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -150,6 +151,7 @@ func (app *application) toggleFavorite(w http.ResponseWriter, r *http.Request, u
 		err := app.dbQuery.RemoveFavourite(r.Context(), database.RemoveFavouriteParams{
 			ID: favorite.ID,
 		    TenantID: tenant.ID,
+			PropertyID: validPropertyId,
 		})
 
 		if err != nil {
@@ -166,10 +168,12 @@ func (app *application) toggleFavorite(w http.ResponseWriter, r *http.Request, u
 	}
 
 	addErr := app.dbQuery.AddFavourite(r.Context(), database.AddFavouriteParams{
-			ID: favorite.ID,
-		    TenantID: tenant.ID,
-			PropertyID: validPropertyId,
-		})
+		ID: uuid.New(),
+		TenantID: tenant.ID,
+		PropertyID: validPropertyId,
+		CreatedAt: time.Now(),
+        UpdatedAt: time.Now(),
+	})
 
 	if addErr != nil {
 		log.Printf("AddFavourite DB err: %v", addErr)

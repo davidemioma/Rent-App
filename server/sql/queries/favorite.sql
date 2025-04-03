@@ -3,7 +3,7 @@ INSERT INTO favorite (id, property_id, tenant_id, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5);
 
 -- name: RemoveFavourite :exec
-DELETE FROM favorite WHERE id = $1 AND tenant_id = $2;
+DELETE FROM favorite WHERE id = $1 AND property_id = $2 AND tenant_id = $3;
 
 -- name: GetFavourite :one
 SELECT * FROM favorite WHERE property_id = $1 AND tenant_id = $2;

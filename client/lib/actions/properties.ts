@@ -30,7 +30,7 @@ export const toggleFavorite = async ({
 }) => {
   try {
     const res = await axiosInstance.patch(
-      `/${cognitoId}/favorites/${propertyId}`
+      `/tenants/${cognitoId}/favorites/${propertyId}`
     );
 
     return { message: res.data };

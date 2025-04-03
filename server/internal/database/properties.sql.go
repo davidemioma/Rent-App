@@ -210,7 +210,7 @@ WHERE
   AND ($7::int IS NULL OR p.square_feet <= $7::int)
 
   -- Property Type: Ignore if NULL or 'any', otherwise compare
-  AND (NULLIF($8::text, 'any') IS NULL OR p.property_type = CAST(NULLIF($8::text, 'any') AS property_type))
+  AND (NULLIF($8::text, 'ANY') IS NULL OR p.property_type = CAST(NULLIF($8::text, 'any') AS property_type))
 
   -- Available From: Ignore if NULL or 'any', otherwise check lease existence
   AND (NULLIF($9::text, 'any') IS NULL OR EXISTS (

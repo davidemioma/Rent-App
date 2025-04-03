@@ -49,6 +49,8 @@ const Listings = ({ authUserId }: Props) => {
     onSuccess: ({ res, propertyId }) => {
       if (res.error) {
         toast.error(res.error);
+
+        return;
       }
 
       toast.success(res.message || "Successful!");

@@ -127,15 +127,16 @@ func (q *Queries) GetFavouriteProperties(ctx context.Context, tenantID uuid.UUID
 }
 
 const removeFavourite = `-- name: RemoveFavourite :exec
-DELETE FROM favorite WHERE id = $1 AND tenant_id = $2
+DELETE FROM favorite WHERE id = $1 AND property_id = $2 AND tenant_id = $3
 `
 
 type RemoveFavouriteParams struct {
-	ID       uuid.UUID
-	TenantID uuid.UUID
+	ID         uuid.UUID
+	PropertyID uuid.UUID
+	TenantID   uuid.UUID
 }
 
 func (q *Queries) RemoveFavourite(ctx context.Context, arg RemoveFavouriteParams) error {
-	_, err := q.db.ExecContext(ctx, removeFavourite, arg.ID, arg.TenantID)
+	_, err := q.db.ExecContext(ctx, removeFavourite, arg.ID, arg.PropertyID, arg.TenantID)
 	return err
 }

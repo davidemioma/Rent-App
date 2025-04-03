@@ -43,7 +43,7 @@ const Card = ({
     },
   });
 
-  const isFavorite = data?.isFavorite || false;
+  const isFavorite = data ? data.isFavorite : false;
 
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-lg w-full mb-5">
