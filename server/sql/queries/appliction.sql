@@ -48,10 +48,15 @@ WHERE a.id = $1;
 -- name: UpdateApplication :exec
 UPDATE application
 SET 
-    lease_id = COALESCE($1, lease_id),
+    lease_id = COALESCE($1::uuid, lease_id),
     name = COALESCE($2, name),
     email = COALESCE($3, email),
     phone_number = COALESCE($4, phone_number),
     message = COALESCE($5, message),
     status = COALESCE($6, status)
+WHERE id = $7;
+
+-- name: UpdateApplicationStatus :exec
+UPDATE application
+SET status = $1
 WHERE id = $2;

@@ -9,12 +9,14 @@ import { getAuthUser } from "@/lib/data/auth";
 import LoadingPage from "@/components/LoadingPage";
 import { getAllApplications } from "@/lib/data/properties";
 import ApplicationCard from "@/components/ApplicationCard";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { updateApplicationStatus } from "@/lib/actions/properties";
+import { updateApplicationStatus } from "@/lib/actions/application";
 import { CircleCheckBig, Download, File, Hospital } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ApplicationPage() {
+  const queryClient = useQueryClient();
+
   const [activeTab, setActiveTab] = useState("all");
 
   const {
@@ -35,7 +37,7 @@ export default function ApplicationPage() {
     isLoading: isFetching,
     isError,
   } = useQuery({
-    queryKey: ["get-application", authUser?.data?.userInfo.cognitoID],
+    queryKey: ["get-applications", authUser?.data?.userInfo.cognitoID],
     queryFn: async () => {
       const data = await getAllApplications();
 
@@ -61,6 +63,10 @@ export default function ApplicationPage() {
       }
 
       toast.success("Appliction Updated!");
+
+      queryClient.invalidateQueries({
+        queryKey: ["get-applications", authUser?.data?.userInfo.cognitoID],
+      });
     },
     onError: (err) => {
       toast.error(err.message);
@@ -135,7 +141,7 @@ export default function ApplicationPage() {
                   application={application}
                   userRole={authUser.data?.role as string}
                   userType={
-                    authUser.data?.role === "manager"
+                    authUser.data?.role === "tenant"
                       ? {
                           id: application.details.managerId,
                           name: application.details.managerName,
@@ -156,9 +162,11 @@ export default function ApplicationPage() {
                     {/* Colored Section Status */}
                     <div
                       className={`p-4 text-green-700 grow ${
-                        application.details.applicationStatus === "Approved"
+                        application.details.applicationStatus.toLowerCase() ===
+                        "approved"
                           ? "bg-green-100"
-                          : application.details.applicationStatus === "Denied"
+                          : application.details.applicationStatus.toLowerCase() ===
+                            "denied"
                           ? "bg-red-100"
                           : "bg-yellow-100"
                       }`}

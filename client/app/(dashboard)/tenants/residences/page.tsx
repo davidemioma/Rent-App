@@ -30,7 +30,7 @@ export default function ResidencesPage() {
     queryKey: ["get-current-residences", authUser?.data?.userInfo.cognitoID],
     queryFn: async () => {
       const data = await getCurrentResidences(
-        authUser?.data?.userInfo.cognitoID || ""
+        authUser?.data?.userInfo.cognitoID as string
       );
 
       return data;
@@ -49,7 +49,7 @@ export default function ResidencesPage() {
     redirect("/");
   }
 
-  if (!isError || !properties) {
+  if (isError || (properties && properties.length < 1)) {
     return (
       <div className="w-full h-full flex items-center justify-center text-center text-muted-foreground">
         {isError

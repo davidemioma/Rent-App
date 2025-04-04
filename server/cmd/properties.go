@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -283,7 +282,7 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 	// Get properties
 	var propertiesWithLocation []utils.JsonProperty
 
-	data, err := app.dbQuery.GetTenantProperties(r.Context(), uuid.NullUUID{
+	properties, err := app.dbQuery.GetTenantProperties(r.Context(), uuid.NullUUID{
 		UUID: tenant.ID,
 		Valid: tenant.ID != uuid.Nil,
 	})
@@ -302,27 +301,17 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	var properties []utils.JsonProperty
+	if (len(properties) < 1) {
+		utils.RespondWithJSON(w, http.StatusOK, []utils.JsonProperty{})
 
-	for _, raw := range data {
-		var property utils.JsonProperty
-
-		if err := json.Unmarshal(raw, &property); err != nil {
-			log.Printf("json.Unmarshal getCurrentResidences err: %v", err)
-
-			utils.RespondWithError(w, http.StatusNotFound, "Unable to get properties!")
-		
-			return
-		}
-		
-		properties = append(properties, property)
+		return
 	}
 
 	for _, property := range properties {
-		coords, err := app.dbQuery.GetLocationCoordinates(r.Context(), property.ID)
+		coords, err := app.dbQuery.GetLocationCoordinates(r.Context(), property.LocationID)
 
 		if err != nil {
-			log.Printf("getProperty (GetLocationCoordinates) err: %v", err)
+			log.Printf("getCurrentResidences (GetLocationCoordinates) err: %v", err)
 			
 			utils.RespondWithError(w, http.StatusNotFound, "Unable to get property coordinates. Try again")
 
@@ -334,9 +323,9 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 		lat := coords.Latitude.(float64)
 
 		propertiesWithLocation = append(propertiesWithLocation, utils.JsonProperty{
-			ID: property.ID,
-			Name: property.Name,
-			Description:       property.Description,
+			ID: property.PropertyID,
+			Name: property.PropertyName,
+			Description:       property.PropertyDescription,
 			PricePerMonth:     property.PricePerMonth,
 			SecurityDeposit:   property.SecurityDeposit,
 			ApplicationFee:    property.ApplicationFee,
@@ -351,15 +340,19 @@ func (app *application) getCurrentResidences(w http.ResponseWriter, r *http.Requ
 			NumberOfReviews:   property.NumberOfReviews,
 			LocationID:        property.LocationID,
 			ManagerID:         property.ManagerID,
-			CreatedAt:         property.CreatedAt,
-			UpdatedAt:         property.UpdatedAt,
+			TenantID:          uuid.NullUUID{
+				UUID: property.TenantID.UUID,
+				Valid: property.TenantID.UUID != uuid.Nil,
+			},
+			CreatedAt:         property.PropertyCreatedAt,
+			UpdatedAt:         property.PropertyUpdatedAt,
 			Location:          utils.JsonLocation{
-				ID: property.Location.ID,
-				Address: property.Location.Address,
-				City: property.Location.City,
-				State: property.Location.State,
-				Country: property.Location.Country,
-				PostalCode: property.Location.PostalCode,
+				ID: property.LocationID,
+				Address: property.Address,
+				City: property.City,
+				State: property.State,
+				Country: property.Country,
+				PostalCode: property.PostalCode,
 				Coordinates: utils.Coordinates{
 					Latitude: lat,
 					Longitude: lng,

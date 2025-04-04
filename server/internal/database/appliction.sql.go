@@ -287,32 +287,50 @@ func (q *Queries) GetUserApplications(ctx context.Context, arg GetUserApplicatio
 const updateApplication = `-- name: UpdateApplication :exec
 UPDATE application
 SET 
-    lease_id = COALESCE($1, lease_id),
+    lease_id = COALESCE($1::uuid, lease_id),
     name = COALESCE($2, name),
     email = COALESCE($3, email),
     phone_number = COALESCE($4, phone_number),
     message = COALESCE($5, message),
     status = COALESCE($6, status)
-WHERE id = $2
+WHERE id = $7
 `
 
 type UpdateApplicationParams struct {
-	LeaseID     uuid.NullUUID
+	Column1     uuid.UUID
 	Name        string
 	Email       string
 	PhoneNumber string
 	Message     sql.NullString
 	Status      ApplicationStatus
+	ID          uuid.UUID
 }
 
 func (q *Queries) UpdateApplication(ctx context.Context, arg UpdateApplicationParams) error {
 	_, err := q.db.ExecContext(ctx, updateApplication,
-		arg.LeaseID,
+		arg.Column1,
 		arg.Name,
 		arg.Email,
 		arg.PhoneNumber,
 		arg.Message,
 		arg.Status,
+		arg.ID,
 	)
+	return err
+}
+
+const updateApplicationStatus = `-- name: UpdateApplicationStatus :exec
+UPDATE application
+SET status = $1
+WHERE id = $2
+`
+
+type UpdateApplicationStatusParams struct {
+	Status ApplicationStatus
+	ID     uuid.UUID
+}
+
+func (q *Queries) UpdateApplicationStatus(ctx context.Context, arg UpdateApplicationStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateApplicationStatus, arg.Status, arg.ID)
 	return err
 }

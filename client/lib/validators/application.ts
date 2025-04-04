@@ -5,6 +5,7 @@ export const ApplicationSchema = z.object({
   email: z.string().email({ message: "Invalid email format." }).trim(),
   phoneNumber: z
     .string()
+    .trim()
     .min(11, {
       message:
         "Invalid phone number, don't forget to add your country code (1.e +44)",

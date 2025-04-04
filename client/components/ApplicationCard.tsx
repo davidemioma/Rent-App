@@ -21,9 +21,9 @@ const ApplicationCard = ({
   );
 
   const statusColor =
-    application.details.applicationStatus === "Approved"
+    application.details.applicationStatus.toLowerCase() === "approved"
       ? "bg-green-500"
-      : application.details.applicationStatus === "Denied"
+      : application.details.applicationStatus.toLowerCase() === "denied"
       ? "bg-red-500"
       : "bg-yellow-500";
 

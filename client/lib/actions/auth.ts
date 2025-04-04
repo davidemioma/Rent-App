@@ -31,7 +31,7 @@ export const createDbUser = async ({
     console.log("createDbUser Err:", err);
 
     if (err instanceof AxiosError) {
-      return { error: `${err.response?.data}` };
+      return { error: `${err.response?.data.message}` };
     } else {
       return { error: "Something went wrong! unable to create user." };
     }
@@ -70,7 +70,7 @@ export const updateDbUser = async ({
     console.log("updateDbUser Err:", err);
 
     if (err instanceof AxiosError) {
-      return { error: `${err.response?.data}` };
+      return { error: `${err.response?.data.message}` };
     } else {
       return { error: "Something went wrong! unable to update user." };
     }

@@ -91,8 +91,7 @@ SELECT
   loc.postal_code,
   ST_X(loc.coordinates::geometry) AS longitude, 
   ST_Y(loc.coordinates::geometry) AS latitude
-FROM 
-  favorite f
+FROM favorite f
 JOIN property p ON f.property_id = p.id
 JOIN location loc ON p.location_id = loc.id
 WHERE f.tenant_id = $1

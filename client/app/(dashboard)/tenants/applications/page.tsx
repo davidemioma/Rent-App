@@ -72,7 +72,7 @@ export default function ApplicationPage() {
             application={application}
             userRole={authUser.data?.role as string}
             userType={
-              authUser.data?.role === "manager"
+              authUser.data?.role === "tenant"
                 ? {
                     id: application.details.managerId,
                     name: application.details.managerName,

@@ -298,10 +298,8 @@ func (app *application) updateApplicationStatus(w http.ResponseWriter, r *http.R
 
 			// Update application status and lease Id.
 			appErr := app.dbQuery.UpdateApplication(r.Context(), database.UpdateApplicationParams{
-				LeaseID: uuid.NullUUID{
-					UUID: newLease.ID,
-					Valid: newLease.ID != uuid.Nil,
-				},
+				ID: application.ID,
+				Column1: newLease.ID,
 				Status: database.ApplicationStatus(params.Status),
 			})
 
@@ -330,7 +328,8 @@ func (app *application) updateApplicationStatus(w http.ResponseWriter, r *http.R
 	}
 
 	// Update status
-	dbErr := app.dbQuery.UpdateApplication(r.Context(), database.UpdateApplicationParams{
+	dbErr := app.dbQuery.UpdateApplicationStatus(r.Context(), database.UpdateApplicationStatusParams{
+		ID: application.ID,
 		Status: database.ApplicationStatus(params.Status),
 	})
 
