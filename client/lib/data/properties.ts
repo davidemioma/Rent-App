@@ -29,9 +29,9 @@ export const getFilteredProperties = async ({
       propertyType: filters.propertyType?.toUpperCase(),
       amenities: filters.amenities?.join(","),
       availableFrom: filters.availableFrom,
-      latitude: filters.coordinates?.[0],
+      latitude: filters.coordinates?.[1],
       favoriteIds: favoriteIds?.join(","),
-      longitude: filters.coordinates?.[1],
+      longitude: filters.coordinates?.[0],
     });
 
     const res = await axiosInstance.get(`/properties`, {

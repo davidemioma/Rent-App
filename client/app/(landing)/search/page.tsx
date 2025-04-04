@@ -2,14 +2,14 @@
 
 import { cn } from "@/lib/utils";
 import Map from "./_components/Map";
+import { getAuthUser } from "@/lib/data/auth";
 import Listings from "./_components/Listings";
 import { NAVBAR_HEIGHT } from "@/lib/constants";
+import { useQuery } from "@tanstack/react-query";
 import FiltersBar from "./_components/FiltersBar";
+import LoadingPage from "@/components/LoadingPage";
 import useFiltersState from "@/hooks/use-filters-state";
 import FiltersSidebar from "./_components/FiltersSidebar";
-import { useQuery } from "@tanstack/react-query";
-import { getAuthUser } from "@/lib/data/auth";
-import LoadingPage from "@/components/LoadingPage";
 
 export default function SearchPage() {
   const { isFiltersOpen } = useFiltersState();

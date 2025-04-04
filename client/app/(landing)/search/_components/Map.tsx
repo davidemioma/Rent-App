@@ -52,7 +52,7 @@ const Map = () => {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["get-filtered-properties"],
+    queryKey: ["get-filtered-properties", filters],
     queryFn: async () => {
       const data = await getFilteredProperties({ filters });
 
@@ -63,10 +63,23 @@ const Map = () => {
   useEffect(() => {
     if (isLoading || isError) return;
 
+    // Validate coordinates
+    const defaultCenter: [number, number] = [-74.5, 40];
+
+    let center: [number, number] = defaultCenter;
+
+    if (filters.coordinates) {
+      const [lng, lat] = filters.coordinates;
+
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        center = filters.coordinates as [number, number];
+      }
+    }
+
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
       style: "mapbox://styles/davidemioma/cl4735p1v001p14pk249txty5",
-      center: filters.coordinates || [-74.5, 40],
+      center: center,
       zoom: 9,
     });
 

@@ -1,13 +1,62 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { NAVBAR_HEIGHT } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
+import useFiltersState from "@/hooks/use-filters-state";
 
 const HeroSection = () => {
+  const router = useRouter();
+
+  const { filters, setFilters } = useFiltersState();
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleLocationSearch = async () => {
+    try {
+      const query = searchQuery.trim();
+
+      if (!query) return;
+
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          query
+        )}.json?access_token=${
+          process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+        }&fuzzyMatch=true`
+      );
+
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        const [lng, lat] = data.features[0].center;
+
+        setFilters({
+          ...filters,
+          location: query,
+          coordinates: [lat, lng],
+        });
+
+        const params = new URLSearchParams({
+          location: query,
+          lat: lat.toString(),
+          lng: lng,
+        });
+
+        router.push(`/search?${params.toString()}`);
+      }
+    } catch (err) {
+      console.error("HeroSection handleLocationSearch Err:", err);
+
+      toast.error("error search location!");
+    }
+  };
+
   return (
     <section
       className="relative"
@@ -48,11 +97,16 @@ const HeroSection = () => {
           <div className="flex justify-center">
             <Input
               className="h-12 max-w-lg bg-white text-black border-none rounded-none rounded-l-xl"
+              value={searchQuery}
               type="text"
               placeholder="Search by city, neighbourhood or address."
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
 
-            <Button className="bg-red-500 h-12 rounded-none rounded-r-xl cursor-pointer hover:bg-red-500 hover:opacity-75 transition">
+            <Button
+              className="bg-red-500 h-12 rounded-none rounded-r-xl cursor-pointer hover:bg-red-500 hover:opacity-75 transition"
+              onClick={handleLocationSearch}
+            >
               Search
             </Button>
           </div>

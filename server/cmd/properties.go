@@ -72,8 +72,6 @@ func (app *application) getProperties(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Params: ", params)
-
 	// Get properties
 	properties, err := app.dbQuery.GetFilteredProperties(r.Context(), params)
 

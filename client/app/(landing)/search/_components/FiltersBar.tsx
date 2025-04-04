@@ -91,10 +91,15 @@ const FiltersBar = () => {
       if (data.features && data.features.length > 0) {
         const [lng, lat] = data.features[0].center;
 
-        setFilters({
+        const newFilters: FiltersState = {
+          ...filters,
           location: searchInput,
           coordinates: [lng, lat],
-        });
+        };
+
+        setFilters(newFilters);
+
+        updateUrl(newFilters);
       }
     } catch (err) {
       console.error("Error search location (handleLocationSearch):", err);
@@ -120,7 +125,7 @@ const FiltersBar = () => {
         {/* Location */}
         <div className="flex items-center border rounded-xl pl-4">
           <input
-            className="w-40"
+            className="w-40 border-none outline-0 ring-0"
             placeholder="Search location"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}

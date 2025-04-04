@@ -167,15 +167,15 @@ WHERE
       AND le.start_date <= CAST(NULLIF($9::text, 'any') AS timestamp)
     )
   )
-
+  
   -- Location: User-specified ST_DWithin logic
   AND (
     $10::float IS NULL OR
     $11::float IS NULL OR
     ST_DWithin(
-      l.coordinates::geometry,
-      ST_SetSRID(ST_MakePoint($11::float, $10::float), 4326),
-      1000 / 111.0 -- User's specified approximate distance in degrees
+      l.coordinates::geography,
+      ST_SetSRID(ST_MakePoint($11::float, $10::float), 4326)::geography,
+      5000
     )
 )
 `
@@ -190,8 +190,8 @@ type GetFilteredPropertiesParams struct {
 	SquareFeetMax sql.NullInt32
 	PropertyType  sql.NullString
 	AvailableFrom sql.NullString
-	Latitude      sql.NullFloat64
-	Longitude     sql.NullFloat64
+	Latitude      float64
+	Longitude     float64
 }
 
 type GetFilteredPropertiesRow struct {
