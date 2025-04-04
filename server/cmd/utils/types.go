@@ -152,10 +152,79 @@ type JsonProperty struct {
 }
 
 type FavoriteProperty struct {
-	ID         uuid.UUID    `json:"id"`
-	PropertyId uuid.UUID    `json:"propertyId"`
-    TenantId   uuid.UUID    `json:"tenantId"`
-	Property   JsonProperty `json:"property"`
+	FavoriteID          uuid.UUID             `json:"favoriteId"`
+	TenantID            uuid.UUID             `json:"tenantId"`
+	PropertyID          uuid.UUID             `json:"propertyId"`
+	PropertyName        string                `json:"propertyName"`
+	PropertyDescription string                `json:"propertyDescription"`
+	PropertyManagerID   uuid.UUID             `json:"propertyManagerId"`
+    PropertyTenantID    uuid.NullUUID         `json:"propertyTenantId"`
+	PricePerMonth       string                `json:"pricePerMonth"`
+	SecurityDeposit     string                `json:"securityDeposit"`
+	ApplicationFee      string                `json:"applicationFee"`
+	PhotoUrls           []string              `json:"photoUrls"`
+	IsPetsAllowed       bool                  `json:"isPetsAllowed"`
+	IsParkingIncluded   bool                  `json:"isParkingIncluded"`
+	Beds                int32                 `json:"beds"`
+	Baths               string                `json:"baths"`
+	SquareFeet          int32                 `json:"squareFeet"`
+	PropertyType        database.PropertyType `json:"propertyType"`
+	AverageRating       sql.NullString        `json:"averageRating"`
+	NumberOfReviews     sql.NullInt32         `json:"numberOfReviews"`
+	PropertyCreatedAt   time.Time             `json:"propertyCreatedAt"`
+	PropertyUpdatedAt   time.Time             `json:"propertyUpdatedAt"`
+	LocationID          uuid.UUID             `json:"locationId"`
+	Address             string                `json:"address"`
+	City                string                `json:"city"`
+	State               string                `json:"state"`
+	Country             string                `json:"country"`
+	PostalCode          string                `json:"postalCode"`
+	Coordinates         Coordinates           `json:"coordinates"`
+}
+
+func DBfavouriteToJson(property database.GetFavouritePropertiesRow, lat float64, lng float64) FavoriteProperty {
+	return FavoriteProperty{
+		FavoriteID:          property.FavoriteID,
+        TenantID:            property.TenantID,
+        PropertyID:          property.PropertyID,
+        PropertyName:        property.PropertyName,
+		PropertyManagerID:   property.PropertyManagerID,
+		PropertyTenantID:    uuid.NullUUID{
+			UUID: property.PropertyTenantID.UUID,
+			Valid: property.PropertyTenantID.UUID != uuid.Nil,
+		},
+        PropertyDescription: property.PropertyDescription,
+        PricePerMonth:       property.PricePerMonth,
+        SecurityDeposit:     property.SecurityDeposit,
+        ApplicationFee:      property.ApplicationFee,
+        PhotoUrls:           property.PhotoUrls,
+        IsPetsAllowed:       property.IsPetsAllowed,
+        IsParkingIncluded:   property.IsParkingIncluded,
+        Beds:                property.Beds,
+        Baths:               property.Baths,
+        SquareFeet:          property.SquareFeet,
+        PropertyType:        property.PropertyType,
+		AverageRating: sql.NullString{
+            String: property.AverageRating.String,
+            Valid:  property.AverageRating.String != "",
+        },
+        NumberOfReviews: sql.NullInt32{
+            Int32: property.NumberOfReviews.Int32,
+            Valid: property.NumberOfReviews.Int32 != 0,
+        },
+        PropertyCreatedAt: property.PropertyCreatedAt,
+        PropertyUpdatedAt: property.PropertyUpdatedAt,
+		LocationID:        property.LocationID,
+        Address:          property.Address,
+        City:            property.City,
+        State:           property.State,
+        Country:         property.Country,
+        PostalCode:      property.PostalCode,
+		Coordinates: Coordinates{
+            Latitude:  lat,
+            Longitude: lng,
+        },
+	}
 }
 
 func DBpropertyToJson(property database.GetPropertyRow, lat float64, lng float64) JsonProperty {

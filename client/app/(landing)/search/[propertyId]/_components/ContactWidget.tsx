@@ -36,7 +36,7 @@ const ContactWidget = ({ isAuthUser }: Props) => {
       </div>
 
       <Button
-        className="w-full bg-primary-700 text-white hover:bg-primary-600"
+        className="w-full bg-[#27272a] text-white hover:bg-[#57575f]"
         onClick={handleButtonClick}
       >
         {isAuthUser ? "Submit Application" : "Sign In to Apply"}

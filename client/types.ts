@@ -39,6 +39,11 @@ type IntValid = {
   Valid: boolean;
 };
 
+type uuidValid = {
+  UUID: string;
+  Valid: boolean;
+};
+
 export type FilteredProperty = {
   id: string;
   name: string;
@@ -57,17 +62,44 @@ export type FilteredProperty = {
   numberOfReviews: IntValid;
   locationId: string;
   managerId: string;
-  tenantId: string | null;
+  tenantId: uuidValid;
   createdAt: string;
   updatedAt: string;
   location: Location;
 };
 
 export type FavoriteProperty = {
-  id: string;
-  propertyId: string;
+  favoriteId: string;
   tenantId: string;
-  property: FilteredProperty;
+  propertyId: string;
+  propertyName: string;
+  propertyDescription: string;
+  propertyManagerId: string;
+  propertyTenantId: uuidValid;
+  pricePerMonth: string;
+  securityDeposit: string;
+  applicationFee: string;
+  photoUrls: string[];
+  isPetsAllowed: boolean;
+  isParkingIncluded: boolean;
+  beds: number;
+  baths: string;
+  squareFeet: number;
+  propertyType: string;
+  averageRating: StringValid;
+  numberOfReviews: IntValid;
+  propertyCreatedAt: string;
+  propertyUpdatedAt: string;
+  locationId: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
 };
 
 export type LeaseType = {

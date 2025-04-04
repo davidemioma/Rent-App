@@ -30,7 +30,7 @@ export default function FavoritesPage() {
     queryKey: ["get-favorite-properties", authUser?.data?.userInfo.cognitoID],
     queryFn: async () => {
       const data = await getFavoriteProperties(
-        authUser?.data?.userInfo.cognitoID || ""
+        authUser?.data?.userInfo.cognitoID as string
       );
 
       return data;
@@ -49,7 +49,7 @@ export default function FavoritesPage() {
     redirect("/");
   }
 
-  if (!isError || !favorites) {
+  if (isError || !favorites) {
     return (
       <div className="w-full h-full flex items-center justify-center text-center text-muted-foreground">
         {isError
@@ -69,10 +69,40 @@ export default function FavoritesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {favorites?.map((favorite) => (
           <Card
-            key={favorite.id}
-            property={favorite.property}
+            key={favorite.favoriteId}
+            property={{
+              id: favorite.propertyId,
+              name: favorite.propertyName,
+              description: favorite.propertyDescription,
+              pricePerMonth: favorite.pricePerMonth,
+              securityDeposit: favorite.securityDeposit,
+              applicationFee: favorite.applicationFee,
+              photoUrls: favorite.photoUrls,
+              isPetsAllowed: favorite.isPetsAllowed,
+              isParkingIncluded: favorite.isParkingIncluded,
+              beds: favorite.beds,
+              baths: favorite.baths,
+              squareFeet: favorite.squareFeet,
+              propertyType: favorite.propertyType,
+              averageRating: favorite.averageRating,
+              numberOfReviews: favorite.numberOfReviews,
+              locationId: favorite.locationId,
+              managerId: favorite.propertyManagerId,
+              tenantId: favorite.propertyTenantId,
+              createdAt: favorite.propertyCreatedAt,
+              updatedAt: favorite.propertyUpdatedAt,
+              location: {
+                id: favorite.locationId,
+                address: favorite.address,
+                city: favorite.city,
+                state: favorite.state,
+                country: favorite.country,
+                postalCode: favorite.postalCode,
+                coordinates: favorite.coordinates,
+              },
+            }}
             showFavoriteBtn={false}
-            propertyLink={`/tenants/residences/${favorite.property.id}`}
+            propertyLink={`/tenants/residences/${favorite.propertyId}`}
             cognitoId={authUser.data?.userInfo.cognitoID}
             isPending={false}
             handleToggleFavorite={() => {}}

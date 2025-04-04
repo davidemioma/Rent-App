@@ -10,9 +10,13 @@ import ContactWidget from "./_components/ContactWidget";
 import PropertyDetails from "./_components/PropertyDetails";
 import PropertyOverview from "./_components/PropertyOverview";
 import PropertyLocation from "./_components/PropertyLocation";
+import ApplicationModal from "./_components/ApplicationModal";
+import { useState } from "react";
 
 export default function PropertyPage() {
   const { propertyId } = useParams();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     data: authUser,
@@ -59,7 +63,7 @@ export default function PropertyPage() {
         }
       />
 
-      <div className="flex flex-col md:flex-row justify-center gap-10 mx-10 md:w-2/3 md:mx-auto mt-16 mb-8">
+      <div className="flex flex-col lg:flex-row justify-center gap-10 px-5 lg:mx-auto mt-16 mb-8">
         <div className="order-2 md:order-1">
           <PropertyOverview property={property} />
 
@@ -73,7 +77,15 @@ export default function PropertyPage() {
         </div>
       </div>
 
-      {!isLoading && !authErr && authUser && <div>ApplicationModal</div>}
+      {!isLoading && !authErr && authUser && (
+        <ApplicationModal
+          isOpen={isModalOpen}
+          onOpenChange={() => setIsModalOpen((prev) => !prev)}
+          propertyId={propertyId as string}
+          authUser={authUser.data?.userInfo}
+          userRole={authUser.data?.role as string}
+        />
+      )}
     </div>
   );
 }

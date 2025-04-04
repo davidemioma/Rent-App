@@ -7,10 +7,11 @@ package database
 
 import (
 	"context"
-	"encoding/json"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const addFavourite = `-- name: AddFavourite :exec
@@ -61,61 +62,117 @@ func (q *Queries) GetFavourite(ctx context.Context, arg GetFavouriteParams) (Fav
 
 const getFavouriteProperties = `-- name: GetFavouriteProperties :many
 SELECT 
-  json_build_object(
-    'id', f.id,
-    'propertyId', f.property_id,
-    'tenantId', f.tenant_id,
-    'property', json_build_object(
-      'id', p.id,
-      'name', p.name,
-      'description', p.description,
-      'price_per_month', p.price_per_month,
-      'security_deposit', p.security_deposit,
-      'application_fee', p.application_fee,
-      'photo_urls', p.photo_urls,
-      'is_pets_allowed', p.is_pets_allowed,
-      'is_parking_included', p.is_parking_included,
-      'beds', p.beds,
-      'baths', p.baths,
-      'square_feet', p.square_feet,
-      'property_type', p.property_type,
-      'average_rating', p.average_rating,
-      'number_of_reviews', p.number_of_reviews,
-      'created_at', p.created_at,
-      'updated_at', p.updated_at,
-      'location', json_build_object(
-        'id', loc.id,
-        'address', loc.address,
-        'city', loc.city,
-        'state', loc.state,
-        'country', loc.country,
-        'postal_code', loc.postal_code,
-        'coordinates', json_build_object(
-          'longitude', ST_X(loc.coordinates::geometry),
-          'latitude', ST_Y(loc.coordinates::geometry)
-        )
-      )
-    )
-  ) AS property_data
-FROM favorite f
+  f.id AS favorite_id,
+  f.tenant_id,
+  p.id AS property_id,
+  p.name AS property_name,
+  p.description AS property_description,
+  p.price_per_month,
+  p.security_deposit,
+  p.application_fee,
+  p.photo_urls,
+  p.is_pets_allowed,
+  p.is_parking_included,
+  p.manager_id AS property_manager_id,
+  p.tenant_id AS property_tenant_id,
+  p.beds,
+  p.baths,
+  p.square_feet,
+  p.property_type,
+  p.average_rating,
+  p.number_of_reviews,
+  p.created_at AS property_created_at,
+  p.updated_at AS property_updated_at,
+  loc.id AS location_id,
+  loc.address,
+  loc.city,
+  loc.state,
+  loc.country,
+  loc.postal_code,
+  ST_X(loc.coordinates::geometry) AS longitude, 
+  ST_Y(loc.coordinates::geometry) AS latitude
+FROM 
+  favorite f
 JOIN property p ON f.property_id = p.id
 JOIN location loc ON p.location_id = loc.id
 WHERE f.tenant_id = $1
 `
 
-func (q *Queries) GetFavouriteProperties(ctx context.Context, tenantID uuid.UUID) ([]json.RawMessage, error) {
+type GetFavouritePropertiesRow struct {
+	FavoriteID          uuid.UUID
+	TenantID            uuid.UUID
+	PropertyID          uuid.UUID
+	PropertyName        string
+	PropertyDescription string
+	PricePerMonth       string
+	SecurityDeposit     string
+	ApplicationFee      string
+	PhotoUrls           []string
+	IsPetsAllowed       bool
+	IsParkingIncluded   bool
+	PropertyManagerID   uuid.UUID
+	PropertyTenantID    uuid.NullUUID
+	Beds                int32
+	Baths               string
+	SquareFeet          int32
+	PropertyType        PropertyType
+	AverageRating       sql.NullString
+	NumberOfReviews     sql.NullInt32
+	PropertyCreatedAt   time.Time
+	PropertyUpdatedAt   time.Time
+	LocationID          uuid.UUID
+	Address             string
+	City                string
+	State               string
+	Country             string
+	PostalCode          string
+	Longitude           interface{}
+	Latitude            interface{}
+}
+
+func (q *Queries) GetFavouriteProperties(ctx context.Context, tenantID uuid.UUID) ([]GetFavouritePropertiesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFavouriteProperties, tenantID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []json.RawMessage
+	var items []GetFavouritePropertiesRow
 	for rows.Next() {
-		var property_data json.RawMessage
-		if err := rows.Scan(&property_data); err != nil {
+		var i GetFavouritePropertiesRow
+		if err := rows.Scan(
+			&i.FavoriteID,
+			&i.TenantID,
+			&i.PropertyID,
+			&i.PropertyName,
+			&i.PropertyDescription,
+			&i.PricePerMonth,
+			&i.SecurityDeposit,
+			&i.ApplicationFee,
+			pq.Array(&i.PhotoUrls),
+			&i.IsPetsAllowed,
+			&i.IsParkingIncluded,
+			&i.PropertyManagerID,
+			&i.PropertyTenantID,
+			&i.Beds,
+			&i.Baths,
+			&i.SquareFeet,
+			&i.PropertyType,
+			&i.AverageRating,
+			&i.NumberOfReviews,
+			&i.PropertyCreatedAt,
+			&i.PropertyUpdatedAt,
+			&i.LocationID,
+			&i.Address,
+			&i.City,
+			&i.State,
+			&i.Country,
+			&i.PostalCode,
+			&i.Longitude,
+			&i.Latitude,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, property_data)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

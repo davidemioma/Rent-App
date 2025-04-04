@@ -33,8 +33,11 @@ const PropertyOverview = ({ property }: Props) => {
           <div className="flex justify-between items-center gap-3">
             <span className="flex items-center text-yellow-500">
               <Star className="w-4 h-4 mr-1 fill-current" />
-              {parseFloat(property.averageRating || "0").toFixed(1)} (
-              {property.numberOfReviews} Reviews)
+              {(
+                parseFloat(property.averageRating.String) +
+                Math.random() * 5
+              ).toFixed(1)}{" "}
+              ({property.numberOfReviews.Int32} Reviews)
             </span>
             <span className="text-green-600">Verified Listing</span>
           </div>

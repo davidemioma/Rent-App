@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -15,6 +14,8 @@ import (
 )
 
 func (app *application) getFavoriteProperties(w http.ResponseWriter, r *http.Request, user utils.User) {
+	var favoriteProperties []utils.FavoriteProperty
+
 	tenant, err := app.dbQuery.GetTenantByCognitoId(r.Context(), user.CognitoID)
 
 	if err != nil {
@@ -25,9 +26,7 @@ func (app *application) getFavoriteProperties(w http.ResponseWriter, r *http.Req
         return
 	}
 
-	var properties []utils.FavoriteProperty
-
-	data, err := app.dbQuery.GetFavouriteProperties(r.Context(), tenant.ID)
+	properties, err := app.dbQuery.GetFavouriteProperties(r.Context(), tenant.ID)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -43,21 +42,25 @@ func (app *application) getFavoriteProperties(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	for _, raw := range data {
-		var property utils.FavoriteProperty
+	for _, property := range properties {
+		coords, err := app.dbQuery.GetLocationCoordinates(r.Context(), property.LocationID)
 
-		if err := json.Unmarshal(raw, &property); err != nil {
-			log.Printf("json.Unmarshal GetFavouriteProperties err: %v", err)
+		if err != nil {
+			log.Printf("getManagerProperties (GetLocationCoordinates) err: %v", err)
+			
+			utils.RespondWithError(w, http.StatusNotFound, "Unable to get property coordinates. Try again")
 
-			utils.RespondWithError(w, http.StatusNotFound, "Unable to get properties!")
-		
 			return
 		}
-		
-		properties = append(properties, property)
+
+		lng := coords.Longitude.(float64)
+
+		lat := coords.Latitude.(float64)
+
+		favoriteProperties = append(favoriteProperties, utils.DBfavouriteToJson(property, lat, lng))
 	}
 
-	utils.RespondWithJSON(w, http.StatusOK, properties)
+	utils.RespondWithJSON(w, http.StatusOK, favoriteProperties)
 }
 
 func (app *application) checkFavorite(w http.ResponseWriter, r *http.Request, user utils.User) {
