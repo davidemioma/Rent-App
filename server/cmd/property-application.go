@@ -16,19 +16,39 @@ import (
 )
 
 func (app *application) getAllApplications(w http.ResponseWriter, r *http.Request, user utils.User) {
-	var userRole string
+	var userId uuid.UUID
 
 	var applicationsWithLease []utils.ApplicationReturnType
 
 	if (user.Role == "manager") {
-		userRole = "manager"
+		manager, err := app.dbQuery.GetManagerByCognitoId(r.Context(), user.CognitoID)
+
+		if err != nil {
+			log.Printf("GetManagerByCognitoId (getAllApplications) DB err: %v", err)
+
+			utils.RespondWithError(w, http.StatusNotFound, "Account not found!")
+		
+			return
+		}
+
+		userId = manager.ID
 	} else if (user.Role == "tenant") {
-		userRole = "tenant"
+		tenant, err := app.dbQuery.GetTenantByCognitoId(r.Context(), user.CognitoID)
+
+		if err != nil {
+			log.Printf("getAllApplications (GetTenantByCognitoId) DB err: %v", err)
+
+			utils.RespondWithError(w, http.StatusNotFound, "Account not found!")
+		
+			return
+		}
+
+		userId = tenant.ID
 	}
 
 	applications, err := app.dbQuery.GetUserApplications(r.Context(), database.GetUserApplicationsParams{
-		Column1: userRole,
-		ManagerID: uuid.MustParse(user.CognitoID),
+		Column1: user.Role,
+		ManagerID: userId,
 	})
 
 	if err != nil {
@@ -105,10 +125,7 @@ func (app *application) WithTx(ctx context.Context, fn func(*database.Queries) e
 func (app *application) createApplication(w http.ResponseWriter, r *http.Request, user utils.User) {
 	// Get the request body
 	type Params struct {
-		ApplicationDate time.Time `json:"applicationDate"`
-		Status          string    `json:"status"`
 		PropertyId      string    `json:"propertyId"`
-		TenantId        string    `json:"tenantId"`
 		Name            string    `json:"name"`
 		Email           string    `json:"email"`
 		PhoneNumber     string    `json:"phoneNumber"`
@@ -182,11 +199,11 @@ func (app *application) createApplication(w http.ResponseWriter, r *http.Request
 			Email: params.Email,
 			PhoneNumber: params.PhoneNumber,
 			Message: sql.NullString{
-				String: params.Status,
-				Valid: len(params.Status) > 0,
+				String: params.Message,
+				Valid: len(params.Message) > 0,
 			},
-			Status: database.ApplicationStatus(params.Status),
-			ApplicationDate: params.ApplicationDate,
+			Status: database.ApplicationStatusPENDING,
+			ApplicationDate: time.Now(),
 		})
 
 		if appErr != nil {

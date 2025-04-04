@@ -17,7 +17,7 @@ const ApplicationCard = ({
   children,
 }: Props) => {
   const [imgSrc, setImgSrc] = useState(
-    application.details.photoUrls?.[0] || "/placeholder.jpg"
+    application.details.photoUrls?.[0] || "/placeholder.webp"
   );
 
   const statusColor =
@@ -39,7 +39,7 @@ const ApplicationCard = ({
             height={150}
             className="rounded-xl object-cover w-full lg:w-[200px] h-[150px]"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            onError={() => setImgSrc("/placeholder.jpg")}
+            onError={() => setImgSrc("/placeholder2.webp")}
           />
           <div className="flex flex-col justify-between">
             <div>
@@ -106,7 +106,7 @@ const ApplicationCard = ({
           <div className="flex gap-4">
             <div>
               <Image
-                src="/landing-i1.png"
+                src="/unknown.png"
                 alt={userType.name}
                 width={40}
                 height={40}

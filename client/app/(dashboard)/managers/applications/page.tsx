@@ -178,18 +178,19 @@ export default function ApplicationPage() {
 
                         <span
                           className={`font-semibold ${
-                            application.details.applicationStatus === "Approved"
+                            application.details.applicationStatus.toLowerCase() ===
+                            "approved"
                               ? "text-green-800"
-                              : application.details.applicationStatus ===
-                                "Denied"
+                              : application.details.applicationStatus.toLowerCase() ===
+                                "denied"
                               ? "text-red-800"
                               : "text-yellow-800"
                           }`}
                         >
-                          {application.details.applicationStatus ===
-                            "Approved" && "This application has been approved."}
-                          {application.details.applicationStatus === "Denied" &&
-                            "This application has been denied."}
+                          {application.details.applicationStatus.toLowerCase() ===
+                            "approved" && "This application has been approved."}
+                          {application.details.applicationStatus.toLowerCase() ===
+                            "denied" && "This application has been denied."}
                           {application.details.applicationStatus ===
                             "Pending" && "This application is pending review."}
                         </span>
@@ -208,7 +209,8 @@ export default function ApplicationPage() {
                         Property Details
                       </Link>
 
-                      {application.details.applicationStatus === "Approved" && (
+                      {application.details.applicationStatus.toLowerCase() ===
+                        "approved" && (
                         <button
                           className={`bg-white border border-gray-300 text-gray-700 py-2 px-4
                           rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50`}
@@ -219,7 +221,8 @@ export default function ApplicationPage() {
                         </button>
                       )}
 
-                      {application.details.applicationStatus === "Pending" && (
+                      {application.details.applicationStatus.toLowerCase() ===
+                        "pending" && (
                         <>
                           <button
                             className="px-4 py-2 text-sm text-white bg-green-600 rounded hover:bg-green-500"
@@ -249,7 +252,8 @@ export default function ApplicationPage() {
                         </>
                       )}
 
-                      {application.details.applicationStatus === "Denied" && (
+                      {application.details.applicationStatus.toLowerCase() ===
+                        "denied" && (
                         <button
                           className={`bg-gray-800 text-white py-2 px-4 rounded-md flex items-center
                           justify-center hover:bg-secondary-500 hover:text-primary-50`}

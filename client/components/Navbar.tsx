@@ -39,7 +39,7 @@ const Navbar = () => {
   const handleSignOut = async () => {
     await signOut();
 
-    window.location.href = "/";
+    window.location.href = "/signin";
   };
 
   return (

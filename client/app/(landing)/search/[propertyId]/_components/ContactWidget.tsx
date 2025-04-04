@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button";
 
 type Props = {
   isAuthUser: boolean;
+  onOpenModal: () => void;
 };
 
-const ContactWidget = ({ isAuthUser }: Props) => {
+const ContactWidget = ({ isAuthUser, onOpenModal }: Props) => {
   const router = useRouter();
 
   const handleButtonClick = () => {
     if (isAuthUser) {
       // Open modal
+      onOpenModal();
     } else {
       router.push("/signin");
     }

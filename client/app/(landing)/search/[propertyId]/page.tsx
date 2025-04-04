@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { getAuthUser } from "@/lib/data/auth";
 import { useQuery } from "@tanstack/react-query";
 import LoadingPage from "@/components/LoadingPage";
@@ -11,7 +12,6 @@ import PropertyDetails from "./_components/PropertyDetails";
 import PropertyOverview from "./_components/PropertyOverview";
 import PropertyLocation from "./_components/PropertyLocation";
 import ApplicationModal from "./_components/ApplicationModal";
-import { useState } from "react";
 
 export default function PropertyPage() {
   const { propertyId } = useParams();
@@ -73,14 +73,17 @@ export default function PropertyPage() {
         </div>
 
         <div className="order-1 md:order-2">
-          <ContactWidget isAuthUser={!!authUser} />
+          <ContactWidget
+            isAuthUser={!!authUser}
+            onOpenModal={() => setIsModalOpen(true)}
+          />
         </div>
       </div>
 
       {!isLoading && !authErr && authUser && (
         <ApplicationModal
           isOpen={isModalOpen}
-          onOpenChange={() => setIsModalOpen((prev) => !prev)}
+          onOpenChange={() => setIsModalOpen(false)}
           propertyId={propertyId as string}
           authUser={authUser.data?.userInfo}
           userRole={authUser.data?.role as string}
