@@ -21,3 +21,4 @@ Run "go version" to check if it was installed, then install air "go install gith
 source ~/.bashrc".
 Go to your server folder and run "go mod download".
 Add port "80" to env because our vpc only allows to 80. Use "echo "PORT=80" > .env".
+Now everything is working we have to configure a process manager that ensures your Go app stays running, restarts on crashes, and handles logs.

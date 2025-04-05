@@ -31,7 +31,7 @@ services:
     ports:
       - "5433:5432"
     env_file:
-      - server/.env.postgres
+      - server/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     command: >
