@@ -79,7 +79,7 @@ const Map = () => {
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
       style: "mapbox://styles/davidemioma/cl4735p1v001p14pk249txty5",
-      center: center,
+      center,
       zoom: 9,
     });
 

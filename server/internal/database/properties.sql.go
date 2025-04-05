@@ -173,9 +173,9 @@ WHERE
     $10::float IS NULL OR
     $11::float IS NULL OR
     ST_DWithin(
-      l.coordinates::geography,
-      ST_SetSRID(ST_MakePoint($11::float, $10::float), 4326)::geography,
-      5000
+      l.coordinates::geometry,
+      ST_SetSRID(ST_MakePoint($11::float, $10::float), 4326),
+      1000 / 111.0 -- User's specified approximate distance in degrees
     )
 )
 `
@@ -190,8 +190,8 @@ type GetFilteredPropertiesParams struct {
 	SquareFeetMax sql.NullInt32
 	PropertyType  sql.NullString
 	AvailableFrom sql.NullString
-	Latitude      float64
-	Longitude     float64
+	Latitude      sql.NullFloat64
+	Longitude     sql.NullFloat64
 }
 
 type GetFilteredPropertiesRow struct {

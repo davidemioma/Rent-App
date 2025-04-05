@@ -236,35 +236,35 @@ func ParsePropertiesQueryParams(r *http.Request) (database.GetFilteredProperties
 	}
 
 	// Coordinate
-	if lat := query.Get("latitude"); lat != "" {
-        if val, err := strconv.ParseFloat(lat, 64); err == nil {
-            params.Latitude = val
-        }
-    }
-
-    if lng := query.Get("longitude"); lng != "" {
-        if val, err := strconv.ParseFloat(lng, 64); err == nil {
-            params.Longitude = val
-        }
-    }
-
-    // if lat := query.Get("latitude"); lat != "" {
+	// if lat := query.Get("latitude"); lat != "" {
     //     if val, err := strconv.ParseFloat(lat, 64); err == nil {
-    //         params.Latitude = sql.NullFloat64{
-	// 			Float64: val,
-	// 			Valid: val != 0,
-	// 		}
+    //         params.Latitude = val
     //     }
     // }
 
     // if lng := query.Get("longitude"); lng != "" {
     //     if val, err := strconv.ParseFloat(lng, 64); err == nil {
-    //         params.Longitude = sql.NullFloat64{
-	// 			Float64: val,
-	// 			Valid: val != 0,
-	// 		}
+    //         params.Longitude = val
     //     }
     // }
+
+    if lat := query.Get("latitude"); lat != "" {
+        if val, err := strconv.ParseFloat(lat, 64); err == nil {
+            params.Latitude = sql.NullFloat64{
+				Float64: val,
+				Valid: true,
+			}
+        }
+    }
+
+    if lng := query.Get("longitude"); lng != "" {
+        if val, err := strconv.ParseFloat(lng, 64); err == nil {
+            params.Longitude = sql.NullFloat64{
+				Float64: val,
+				Valid: true,
+			}
+        }
+    }
 
 	return params, nil
 }

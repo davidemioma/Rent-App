@@ -63,12 +63,12 @@ WHERE
   
   -- Location: User-specified ST_DWithin logic
   AND (
-    @latitude::float IS NULL OR
-    @longitude::float IS NULL OR
+    sqlc.narg(latitude)::float IS NULL OR
+    sqlc.narg(longitude)::float IS NULL OR
     ST_DWithin(
-      l.coordinates::geography,
-      ST_SetSRID(ST_MakePoint(@longitude::float, @latitude::float), 4326)::geography,
-      5000
+      l.coordinates::geometry,
+      ST_SetSRID(ST_MakePoint(sqlc.arg(longitude)::float, sqlc.arg(latitude)::float), 4326),
+      1000 / 111.0 -- User's specified approximate distance in degrees
     )
 );
 

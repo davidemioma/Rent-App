@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PropertyTypeIcons } from "@/lib/constants";
 import { usePathname, useRouter } from "next/navigation";
-import { Filter, Grid, List, Search } from "lucide-react";
 import { cleanParams, cn, formatPriceValue } from "@/lib/utils";
+import { Filter, Grid, List, Loader2, Search } from "lucide-react";
 import useFiltersState, { FiltersState } from "@/hooks/use-filters-state";
 import {
   Select,
@@ -28,6 +28,8 @@ const FiltersBar = () => {
     viewMode,
     setViewMode,
   } = useFiltersState();
+
+  const [mapBoxLoading, setMapBoxLoading] = useState(false);
 
   const [searchInput, setSearchInput] = useState(filters.location);
 
@@ -76,11 +78,15 @@ const FiltersBar = () => {
   };
 
   const handleLocationSearch = async () => {
+    if (!searchInput.trim()) return;
+
+    setMapBoxLoading(true);
+
     try {
       // API call from MapBox.
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          filters.location
+          searchInput
         )}.json?access_token=${
           process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
         }&fuzzyMatch=true`
@@ -103,6 +109,8 @@ const FiltersBar = () => {
       }
     } catch (err) {
       console.error("Error search location (handleLocationSearch):", err);
+    } finally {
+      setMapBoxLoading(false);
     }
   };
 
@@ -116,6 +124,7 @@ const FiltersBar = () => {
             isFiltersOpen && "bg-primary-700 text-primary-100"
           )}
           onClick={toggleFiltersOpen}
+          disabled={mapBoxLoading}
         >
           <Filter className="w-4 h-4" />
 
@@ -134,8 +143,13 @@ const FiltersBar = () => {
           <Button
             className="bg-transparent border-l hover:bg-transparent text-black"
             onClick={handleLocationSearch}
+            disabled={mapBoxLoading}
           >
-            <Search className="w-4 h-4" />
+            {mapBoxLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
           </Button>
         </div>
 
@@ -147,6 +161,7 @@ const FiltersBar = () => {
             onValueChange={(value) =>
               handleFiltersChange("priceRange", value, true)
             }
+            disabled={mapBoxLoading}
           >
             <SelectTrigger className="w-fit rounded-xl border-primary-400">
               {formatPriceValue(filters.priceRange[0], true)}
@@ -169,6 +184,7 @@ const FiltersBar = () => {
             onValueChange={(value) =>
               handleFiltersChange("priceRange", value, false)
             }
+            disabled={mapBoxLoading}
           >
             <SelectTrigger className="w-fit rounded-xl border-primary-400">
               <SelectValue>
@@ -193,6 +209,7 @@ const FiltersBar = () => {
           <Select
             value={filters.beds}
             onValueChange={(value) => handleFiltersChange("beds", value, null)}
+            disabled={mapBoxLoading}
           >
             <SelectTrigger className="w-fit rounded-xl border-primary-400">
               <SelectValue placeholder="Beds" />
@@ -215,6 +232,7 @@ const FiltersBar = () => {
           <Select
             value={filters.baths}
             onValueChange={(value) => handleFiltersChange("baths", value, null)}
+            disabled={mapBoxLoading}
           >
             <SelectTrigger className="w-fit rounded-xl border-primary-400">
               <SelectValue placeholder="Baths" />
@@ -269,6 +287,7 @@ const FiltersBar = () => {
               viewMode === "list" ? "bg-[#27272a] text-[#fcfcfc]" : ""
             )}
             onClick={() => setViewMode("list")}
+            disabled={mapBoxLoading}
           >
             <List className="w-5 h-5" />
           </Button>
@@ -280,6 +299,7 @@ const FiltersBar = () => {
               viewMode === "grid" ? "bg-[#27272a] text-[#fcfcfc]" : ""
             )}
             onClick={() => setViewMode("grid")}
+            disabled={mapBoxLoading}
           >
             <Grid className="w-5 h-5" />
           </Button>
