@@ -1,0 +1,23 @@
+Create a vpc, use vpc only, IPv4 CIDR manual input, IPv4 CIDR is the ranges your ip could be applied, we use "10.0.0.0/16".
+Create subnets (2 private and 1 public) for security to watch who can connect to your vpc, choose the vpc you created and your closest availabilty zone, the second private subnet should have a different availabilty zone. for subnets, your IPv4 subnet CIDR block is "10.0.0.0/24" for public, "10.0.1.0/24" for the first private and "10.0.2.0/24" for the second one.
+We need to create an internet gateway to connect to our vpc and attach it to the vpc you created.
+We need to create routes tables (3) for each subnets, attach it to the vpc you created. when you create it click on "Edit subnet association" to link it to subnet.
+We need to edit routes for public routes table so it will accessed through the internet. Click the "Edit routes" button and add route, Destination is "0.0.0.0/0" and Target is the internet gateway you created.
+Now we setup EC2 instance, use linux, t2.micro, create a new key pair, allow SSH, HTTPS and HTTP then click edit. when editing assign your EC2 to your vpc and public subnet, then enable "Auto-assign public IP". We have to create our security group, allow SSH, HTTPS and HTTP (leave it do not change anything), then launch instance.
+We then connect to our EC2 instance, use "Connect using EC2 Instance Connect" and leave the default settings.
+Switch to super user using "sudo su -" then install nvm using "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash", then activate nvm using ". ~/.nvm/nvm.sh".
+Install node with nvm using "nvm install node" and "node -v" and "npm -v" to check if it's installed.
+If you are using bun "curl -fsSL https://bun.sh/install | bash" and then add bun to your PATH using "echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.bashrc
+echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc".
+To check if bun is installed run "bun --version" if you want to run the frontend.
+We then nees to update our instance using "sudo yum update -y".
+We install Git using "sudo yum install git -y" and "git --version" to check if it's installed.
+Now you clone your project repo using "git clone [your-github-link]". You need to authenticate if your repo is private. and use "ls" to view folders.
+Use "cd folder_name" to enter a folder.
+The backend is in Go. so we need to install Go using "wget https://go.dev/dl/go1.21.3.linux-amd64.tar.gz", then Extract and install "sudo tar -C /usr/local -xzf go1.21.3.linux-amd64.tar.gz", then Add Go to PATH using "echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+source ~/.bashrc".
+Run "go version" to check if it was installed, then install air "go install github.com/air-verse/air@latest", check if air is installed "~/go/bin/air -v" and add air to PATH "echo 'export PATH=$PATH:~/go/bin' >> ~/.bashrc
+source ~/.bashrc".
+Go to your server folder and run "go mod download".
+Add port "80" to env because our vpc only allows to 80. Use "echo "PORT=80" > .env".
