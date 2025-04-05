@@ -1,14 +1,31 @@
-# Variables
-DB_USER ?= postgres
-DB_PASSWORD ?= king123
-DB_NAME ?= rentify-db
-DB_HOST ?= localhost
-DB_PORT ?= 5433
-SSL_MODE ?= disable
+# Load .env.postgres (fail if missing)
+ifneq (,$(wildcard .env.postgres))
+include .env.postgres
+export $(shell sed 's/=.*//' .env.postgres)
+else
+$(error ".env.postgres file is missing. Create it from .env.postgres.example")
+endif
+
+# Validate required variables
+REQUIRED_VARS := POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB
+$(foreach var,$(REQUIRED_VARS),\
+  $(if $($(var)),,$(error "$(var) is not set in .env.postgres")))
+
+# Variables with defaults for non-critical options
+DB_USER ?= $(POSTGRES_USER)
+DB_PASSWORD ?= $(POSTGRES_PASSWORD)
+DB_NAME ?= $(POSTGRES_DB)
+DB_HOST ?= $(or $(POSTGRES_HOST),localhost)
+DB_PORT ?= $(or $(POSTGRES_PORT),5433)
+SSL_MODE ?= $(or $(POSTGRES_SSL_MODE),disable)
 MIGRATIONS_DIR ?= sql/schema
 
+# URL-encode credentials
+ENCODED_DB_USER := $(shell echo '$(DB_USER)' | sed 's/:/%3A/g')
+ENCODED_DB_PASSWORD := $(shell echo '$(DB_PASSWORD)' | sed 's/:/%3A/g')
+
 # Connection string
-CONNECTION_STRING = "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(SSL_MODE)"
+CONNECTION_STRING = "postgres://$(ENCODED_DB_USER):$(ENCODED_DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(SSL_MODE)"
 
 # Migration targets
 run-migration-up:
@@ -30,10 +47,8 @@ run-migration-reset:
 	done
 	@echo "All down migrations attempted - verify database state"
 
-
-# Help target (optional)
 help:
 	@echo "Available targets:"
 	@echo "  run-migration-up    - Apply all migrations"
 	@echo "  run-migration-down  - Roll back the latest migration"
-	@echo "  run-migration-reset  - Reset all migration"
+	@echo "  run-migration-reset - Reset all migrations (DANGER: destructive)"
