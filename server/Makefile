@@ -25,7 +25,7 @@ ENCODED_DB_USER := $(shell echo '$(DB_USER)' | sed 's/:/%3A/g')
 ENCODED_DB_PASSWORD := $(shell echo '$(DB_PASSWORD)' | sed 's/:/%3A/g')
 
 # Connection string
-CONNECTION_STRING = "postgres://$(ENCODED_DB_USER):$(ENCODED_DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+CONNECTION_STRING = "postgres://$(ENCODED_DB_USER):$(ENCODED_DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
 
 # Migration targets
 run-migration-up:
