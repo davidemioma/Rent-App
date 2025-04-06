@@ -22,3 +22,29 @@ source ~/.bashrc".
 Go to your server folder and run "go mod download".
 Add port "80" to env because our vpc only allows to 80. Use "echo "PORT=80" > .env".
 Now everything is working we have to configure a process manager that ensures your Go app stays running, restarts on crashes, and handles logs.
+Nvaigate to server and run "nano .env" and paste your environment variables.
+Compile your application into a binary, go to "/server/cmd" and run "go build -o rentapp".
+Then we setup systemd using "sudo nano /etc/systemd/system/rentapp.service" and paste the configurations "[Unit]
+Description=Rental App Server
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/Rent-App/server
+ExecStart=/root/Rent-App/server/cmd/rentapp
+Restart=always
+RestartSec=5
+EnvironmentFile=/root/Rent-App/server/.env
+StandardOutput=file:/var/log/rentapp.log
+StandardError=file:/var/log/rentapp-error.log
+
+[Install]
+WantedBy=multi-user.target".
+Reload systemd (After Creating/Editing the Service File) using "sudo systemctl daemon-reload", then start the Service uning "sudo systemctl start rentapp". To verify it’s running use "sudo systemctl status rentapp".
+to enable Auto-Start on Boot "sudo systemctl enable rentapp".
+To stop the Service use "sudo systemctl stop rentapp".
+Now let's setup RDS, use "Standard create" and "postgres". for "Templates" you can use free tier. Set your master password, you can leave the default storage options. for connectivity choose "Don’t connect to an EC2 compute resource" and choose the vpc you created. Make sure Public access is "no". For "VPC security group (firewall)" Craete a new one. you can Enable Performance insights if you want. Can add initial database name as well. You can also enable Backup and Encryption but you maybe charged.
+After creating the rds, we want to edit the security group, click on "Edit inbound rules" add your eC2 security group. Then you go to your EC2 instance, security and click security group you have and click on "Edit outbound rules" add a rule "postgres" and set it to the RDS security group. This is because EC2 need to send outbound calls to the RDS, and RDS need to recieve inbound calls from EC2.
+Update your .env file with db credentials.
+install make "sudo yum install -y make" for running scripts.
+run "make run-migration-up".
